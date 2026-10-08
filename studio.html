@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson Studio · ClassMitra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <header class="top">
+    <h1><a class="brandlink" href="index.html">ClassMitra</a> <span class="sub">Lesson studio</span></h1>
+    <nav role="tablist">
+      <button class="tab active" data-view="lesson" role="tab">Create lesson</button>
+      <button class="tab" data-view="live" role="tab">Live classroom</button>
+    </nav>
+    <a class="btn" href="index.html">&larr; Dashboard</a>
+    <span class="mode" id="modeBadge">Demo mode</span>
+  </header>
+
+  <main>
+    <!-- CREATE LESSON -->
+    <section id="view-lesson" class="view active">
+      <div class="panel form">
+        <label for="topic">Lesson title</label>
+        <input id="topic" type="text" placeholder="How a Random Forest makes a decision">
+
+        <label for="details">What should the teacher explain?</label>
+        <textarea id="details" rows="7" placeholder="Paste your notes or describe the lesson. Include any equations or examples you want shown."></textarea>
+
+        <div class="row">
+          <div>
+            <label for="avatar">Teacher avatar</label>
+            <select id="avatar">
+              <option>Female teacher</option>
+              <option>Male teacher</option>
+            </select>
+          </div>
+          <div>
+            <label for="visuals">Visuals beside the teacher</label>
+            <select id="visuals">
+              <option value="diagram">Animated diagrams and equations</option>
+              <option value="stock">Stock footage</option>
+              <option value="ai">AI-generated clips</option>
+            </select>
+          </div>
+          <div>
+            <label for="lang">Language</label>
+            <select id="lang">
+              <option>English</option>
+              <option>Hindi</option>
+              <option>Marathi</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="generateBtn" class="primary">Generate video</button>
+        <p class="status" id="genStatus" aria-live="polite"></p>
+      </div>
+
+      <div class="panel preview">
+        <div class="stage" id="stage">
+          <div class="visual" id="stageVisual"><p>The visual for each scene appears here</p></div>
+          <div class="avatarBox" id="stageAvatar">Teacher</div>
+          <video id="finalVideo" controls hidden></video>
+        </div>
+        <h2>Scenes</h2>
+        <ol id="sceneList" class="scenes"><li class="empty">No scenes yet. Fill in the form and generate.</li></ol>
+        <div class="row actions">
+          <a id="downloadBtn" class="btn" hidden download>Download MP4</a>
+          <button id="uploadYtBtn" class="btn" hidden>Upload to YouTube</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE CLASSROOM -->
+    <section id="view-live" class="view">
+      <div class="panel meeting">
+        <div class="tiles" id="tiles"></div>
+        <div class="row actions">
+          <button id="camBtn" class="btn">Start my camera</button>
+          <button id="simBtn" class="btn">Simulate distracted student</button>
+        </div>
+        <p class="hint">Each tile shows an attention score from 0 to 100. Below 40 for 10 seconds flags the student.</p>
+      </div>
+
+      <aside class="panel side">
+        <h2>Settings</h2>
+        <label class="check"><input type="checkbox" id="needApproval" checked> Ask me before calling out a student</label>
+        <label class="check"><input type="checkbox" id="autoWhatsapp"> Send WhatsApp to me if the student does not stand</label>
+        <label for="teacherPhone">My WhatsApp number</label>
+        <input id="teacherPhone" type="tel" placeholder="+91 98XXXXXXXX">
+
+        <h2>Activity</h2>
+        <ul id="log" class="log"><li class="empty">Nothing yet.</li></ul>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Call-out dialog -->
+  <dialog id="callDialog">
+    <h2 id="callTitle"></h2>
+    <p id="callText"></p>
+    <div class="row actions">
+      <button id="callApprove" class="primary">Call out</button>
+      <button id="callDismiss" class="btn">Dismiss</button>
+    </div>
+  </dialog>
+
+  <script src="js/app.js"></script>
+<script>
+    // Context passed from the dashboard (department, class, division, subject)
+    const q = new URLSearchParams(location.search);
+    if (q.get("ctx")) {
+      const p = document.createElement("p");
+      p.className = "ctx";
+      p.textContent = "Working on: " + q.get("ctx");
+      document.querySelector("main").prepend(p);
+    }
+    if (q.get("tab") === "live") document.querySelector('[data-view="live"]').click();
+  </script>
+</body>
+</html>

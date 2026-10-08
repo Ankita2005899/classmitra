@@ -1,0 +1,40 @@
+a.tab { text-decoration: none; }
+.brandlink { color: inherit; text-decoration: none; }
+.sub { font: 400 .9rem "IBM Plex Sans", sans-serif; color: var(--muted); margin-left: 8px; }
+.ctx { margin: 0 0 16px; padding: 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); }
+
+.crumbs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 18px; font-size: .92rem; color: var(--muted); }
+.crumbs a { color: var(--board); font-weight: 500; text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.crumbs .sep { opacity: .5; }
+
+.hero { margin-bottom: 22px; }
+.hero h2 { font-size: 1.7rem; margin: 0; }
+.hero p { margin: 4px 0 0; color: var(--muted); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
+.stat b { display: block; font: 700 1.7rem "Bricolage Grotesque", sans-serif; }
+.stat span { color: var(--muted); font-size: .9rem; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.card {
+  display: block; background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 18px; color: inherit; text-decoration: none; transition: transform .15s, border-color .15s;
+}
+.card:hover { transform: translateY(-3px); border-color: var(--board); }
+.badge {
+  display: inline-grid; place-items: center; min-width: 48px; height: 48px; padding: 0 10px; margin-bottom: 12px;
+  border-radius: 10px; background: var(--board); color: var(--chalk); font: 700 1rem "Bricolage Grotesque", sans-serif;
+}
+.card h3 { margin: 0 0 4px; font: 700 1.1rem "Bricolage Grotesque", sans-serif; }
+.card p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+.detail { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.tile { display: block; padding: 20px; border-radius: var(--r); border: 1px solid var(--line); background: var(--card); color: inherit; text-decoration: none; }
+.tile:hover { border-color: var(--mark); }
+.tile h3 { margin: 0 0 6px; font: 700 1.05rem "Bricolage Grotesque", sans-serif; }
+.tile p { margin: 0; color: var(--muted); font-size: .9rem; }
+.tile.off { opacity: .55; cursor: not-allowed; }
+.tile.off:hover { border-color: var(--line); }
+.empty-state { color: var(--muted); }
