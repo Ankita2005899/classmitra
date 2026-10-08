@@ -1,5 +1,17 @@
+# secrets
 .env
-node_modules/
+backend/.env
+
+# python
+.venv/
+venv/
 __pycache__/
+*.pyc
+.pytest_cache/
+
+# node
+node_modules/
+
+# generated files
 *.mp4
 output/
