@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,6 +23,12 @@ app.add_middleware(
 def health():
     """Is the server alive? Used by you, by tests, and later by hosting."""
     return {"status": "ok", "env": settings.app_env}
+
+
+@app.get("/api/health/time")
+def health_time():
+    """Current server time in UTC (ISO 8601 text). Handy to check the server clock."""
+    return {"time": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/api/config-check")
