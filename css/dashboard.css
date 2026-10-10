@@ -38,3 +38,28 @@ a.tab { text-decoration: none; }
 .tile.off { opacity: .55; cursor: not-allowed; }
 .tile.off:hover { border-color: var(--line); }
 .empty-state { color: var(--muted); }
+
+/* Home: departments on the left, timetable (more than half the width) on the right */
+.home { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: 24px; align-items: start; }
+.home .stats { grid-template-columns: repeat(2, 1fr); margin-bottom: 20px; }
+.home .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.tt { position: sticky; top: 16px; }
+.tt h2 { margin-top: 0; font-size: 1.3rem; }
+.tt label { display: block; margin: 14px 0 6px; font-weight: 500; }
+.drop {
+  display: grid; gap: 4px; place-items: center; text-align: center; margin-top: 16px !important; padding: 28px 16px;
+  border: 2px dashed var(--line); border-radius: var(--r); background: var(--paper); cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.drop span { color: var(--muted); font-size: .9rem; font-weight: 400; }
+.drop:hover, .drop.over, .drop:focus-within { border-color: var(--board); background: #e4efed; }
+.sr { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.ttfile { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px 0 10px; }
+.ttfile strong { overflow-wrap: anywhere; }
+.ttfile span { display: flex; gap: 8px; flex-wrap: wrap; }
+.ttbox { border: 1px solid var(--line); border-radius: var(--r); background: #fff; overflow: auto; max-height: 560px; }
+.ttbox img { display: block; width: 100%; height: auto; }
+.ttbox embed { display: block; width: 100%; height: 560px; }
+.ttempty { display: grid; gap: 4px; place-items: center; margin-top: 16px; padding: 56px 16px; border: 1px solid var(--line); border-radius: var(--r); color: var(--muted); text-align: center; }
+.ttempty b { color: var(--ink); }
+@media (max-width: 900px) { .home { grid-template-columns: 1fr; } .tt { position: static; } }

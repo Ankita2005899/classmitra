@@ -38,15 +38,34 @@ function render() {
     const allClasses = sum(DATA, (d) => d.classes.length);
     const allDivs = sum(DATA, (d) => sum(d.classes, (c) => c.divisions.length));
     const allStudents = sum(DATA, studentsOf);
-    html += `<div class="hero"><h2>Departments</h2><p>Pick a department to open its classes, divisions and subjects.</p></div>
-      <div class="stats">
-        <div class="stat"><b>${DATA.length}</b><span>Departments</span></div>
-        <div class="stat"><b>${allClasses}</b><span>Classes</span></div>
-        <div class="stat"><b>${allDivs}</b><span>Divisions</span></div>
-        <div class="stat"><b>${allStudents}</b><span>Students</span></div>
-      </div>
-      <div class="grid">${DATA.map((d) =>
-        card("#/" + d.id, d.code, d.name, `${d.classes.length} classes · ${studentsOf(d)} students`)).join("")}</div>`;
+    const opts = DATA.flatMap((d) => d.classes.flatMap((c) => c.divisions.map((v) =>
+      `<option value="${d.id}-${c.id}-${v.id}">${esc(d.name)} › ${esc(c.name)} ${esc(v.name)}</option>`))).join("");
+    html += `<div class="home">
+      <section class="left">
+        <div class="hero"><h2>Departments</h2><p>Pick a department to open its classes, divisions and subjects.</p></div>
+        <div class="stats">
+          <div class="stat"><b>${DATA.length}</b><span>Departments</span></div>
+          <div class="stat"><b>${allClasses}</b><span>Classes</span></div>
+          <div class="stat"><b>${allDivs}</b><span>Divisions</span></div>
+          <div class="stat"><b>${allStudents}</b><span>Students</span></div>
+        </div>
+        <div class="grid">${DATA.map((d) =>
+          card("#/" + d.id, d.code, d.name, `${d.classes.length} classes · ${studentsOf(d)} students`)).join("")}</div>
+      </section>
+      <section class="tt panel" aria-labelledby="ttH">
+        <h2 id="ttH">Timetable</h2>
+        <p class="hint">Upload the timetable for a division as an image or a PDF.</p>
+        <label for="ttSel">Division</label>
+        <select id="ttSel">${opts}</select>
+        <label class="drop" id="ttDrop">
+          <input class="sr" id="ttFile" type="file" accept="image/*,.pdf,application/pdf">
+          <strong>Drop the timetable here</strong>
+          <span>or click to choose a file. Image or PDF, up to 8 MB.</span>
+        </label>
+        <p class="status" id="ttMsg" aria-live="polite"></p>
+        <div id="ttView"></div>
+      </section>
+    </div>`;
   } else if (depth === 1) {
     html += `<div class="hero"><h2>${esc(dept.name)}</h2><p>Select a class.</p></div>
       <div class="grid">${dept.classes.map((c) =>
@@ -74,6 +93,63 @@ function render() {
 
   app.innerHTML = html;
   window.scrollTo(0, 0);
+  if (depth === 0) timetable();
+}
+
+// ---- Timetable upload (saved in this browser for now; later it goes to the backend) ----
+function timetable() {
+  const $ = (id) => document.getElementById(id);
+  const sel = $("ttSel"), input = $("ttFile"), drop = $("ttDrop"), view = $("ttView"), msg = $("ttMsg");
+  const key = () => "cm_timetable_" + sel.value;
+  const session = {}; // used when a file is too big for browser storage
+
+  const load = () => session[key()] || JSON.parse(localStorage.getItem(key()) || "null");
+  const toBlobUrl = async (dataUrl) => URL.createObjectURL(await (await fetch(dataUrl)).blob());
+
+  async function show() {
+    let t = null;
+    try { t = load(); } catch (e) { t = null; }
+    if (!t) {
+      view.innerHTML = `<div class="ttempty"><b>No timetable yet</b><span>Upload a file and it will appear here.</span></div>`;
+      return;
+    }
+    const url = await toBlobUrl(t.data);
+    const body = t.type === "application/pdf"
+      ? `<embed src="${url}" type="application/pdf">`
+      : `<img src="${url}" alt="Timetable">`;
+    view.innerHTML = `<div class="ttfile"><strong>${esc(t.name)}</strong>
+        <span><a class="btn" href="${url}" target="_blank" rel="noopener">Open full size</a>
+        <button class="btn" id="ttReplace" type="button">Replace</button>
+        <button class="btn" id="ttRemove" type="button">Remove</button></span></div>
+      <div class="ttbox">${body}</div>`;
+    $("ttReplace").onclick = () => input.click();
+    $("ttRemove").onclick = () => {
+      delete session[key()]; localStorage.removeItem(key());
+      msg.textContent = "Timetable removed."; show();
+    };
+  }
+
+  function save(file) {
+    if (!file) return;
+    const ok = file.type === "application/pdf" || file.type.startsWith("image/");
+    if (!ok) { msg.textContent = "Please choose an image or a PDF file."; return; }
+    if (file.size > 8 * 1024 * 1024) { msg.textContent = "File is larger than 8 MB. Choose a smaller file."; return; }
+    const r = new FileReader();
+    r.onload = () => {
+      const t = { name: file.name, type: file.type, data: r.result };
+      try { localStorage.setItem(key(), JSON.stringify(t)); delete session[key()]; msg.textContent = "Timetable saved."; }
+      catch (e) { session[key()] = t; msg.textContent = "Shown for now. This file is too big to keep after you close the page."; }
+      show();
+    };
+    r.readAsDataURL(file);
+  }
+
+  input.onchange = () => { save(input.files[0]); input.value = ""; };
+  sel.onchange = () => { msg.textContent = ""; show(); };
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => save(e.dataTransfer.files[0]));
+  show();
 }
 
 window.addEventListener("hashchange", render);
