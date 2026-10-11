@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .data import DEPARTMENTS
@@ -50,3 +53,25 @@ def get_department(dept_id: str):
         if dept["id"] == dept_id:
             return dept
     raise HTTPException(status_code=404, detail="Department not found")
+
+
+# ---- Website pages (so the site also opens on Render) ----
+# Only these pages and the css/js folders are shared. The rest of the repo,
+# including backend/.env, is never served.
+SITE_DIR = Path(__file__).resolve().parents[2]
+PAGES = {"/": "index.html", "/index.html": "index.html", "/login.html": "login.html", "/studio.html": "studio.html"}
+
+
+def _page(filename: str):
+    def serve():
+        return FileResponse(SITE_DIR / filename)
+    return serve
+
+
+for _url, _file in PAGES.items():
+    if (SITE_DIR / _file).is_file():
+        app.add_api_route(_url, _page(_file), methods=["GET"], include_in_schema=False)
+
+for _folder in ("css", "js"):
+    if (SITE_DIR / _folder).is_dir():
+        app.mount(f"/{_folder}", StaticFiles(directory=SITE_DIR / _folder), name=_folder)
