@@ -56,10 +56,11 @@ def get_department(dept_id: str):
 
 
 # ---- Website pages (so the site also opens on Render) ----
+# The first page people see (/) is the login page. The dashboard is /index.html.
 # Only these pages and the css/js folders are shared. The rest of the repo,
 # including backend/.env, is never served.
 SITE_DIR = Path(__file__).resolve().parents[2]
-PAGES = {"/": "index.html", "/index.html": "index.html", "/login.html": "login.html", "/studio.html": "studio.html"}
+PAGES = {"/": "login.html", "/index.html": "index.html", "/login.html": "login.html", "/studio.html": "studio.html"}
 
 
 def _page(filename: str):
