@@ -57,6 +57,7 @@ details p{margin-top:8px;color:var(--muted)}
 .vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:10px}
 .vid{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;transition:transform .2s,border-color .2s;text-align:left;padding:0;font:inherit}
 .vid:hover{transform:translateY(-3px);border-color:var(--board)}.vid .th{height:84px;background:var(--board);display:grid;place-items:center}.vid div.t{padding:10px 12px}.vid small{color:var(--muted)}
+.fbx{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.fbx .btn{padding:11px 8px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;max-width:92vw;opacity:0;pointer-events:none;transition:.3s;z-index:9}.toast.on{opacity:1;transform:translate(-50%,0)}
 :focus-visible{outline:3px solid var(--mark);outline-offset:2px}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -80,6 +81,7 @@ const PUR=[{id:'ppt',n:'Lecture PPTs',d:'Slides the AI teacher taught'},{id:'asg
 let sub=SUB[0],pur='ppt',sent={},started={};
 try{const u=JSON.parse(localStorage.getItem('cm_user')||'null');if(u&&u.name)$('#hi').textContent='Hi, '+u.name.split(' ')[0]}catch(e){}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)}
+const allNews=()=>{let a=[];try{a=JSON.parse(localStorage.getItem('cm_announcements'))||[]}catch(e){}return a.slice(0,3).map(x=>['Admin',x.text.slice(0,42),x.text]).concat(NEWS)};
 const pct=()=>{const p=att.reduce((a,x)=>a+x.p,0),t=att.reduce((a,x)=>a+x.t,0);return Math.round(p*100/t)};
 function dash(){
 $('#app').innerHTML=`<div class="layout">
@@ -89,8 +91,11 @@ $('#app').innerHTML=`<div class="layout">
 <div class="bars" id="bars"></div></div>
 <div class="mark"><select id="msub" aria-label="Subject">${SUB.map(s=>`<option>${s}</option>`).join('')}</select><button class="btn" id="mk">Mark my attendance</button></div>
 <p class="sub" style="margin:10px 0 0">Works only when the class QR is open inside the classroom.</p></section>
+<section class="card"><h2>Tell your teacher</h2><p class="sub">Pick the subject of the lecture that is going on and tell your teacher how it is going. The admin panel shows it at once.</p>
+<select id="fsub" aria-label="Subject in lecture">${SUB.map(s=>`<option>${s}</option>`).join('')}</select>
+<div class="fbx">${['Enough for today','Explain once more','Go slower','I have a doubt'].map((m,i)=>`<button class="btn ${i?'ghost':''}" data-f="${m}">${m}</button>`).join('')}</div></section>
 <section class="card"><h2>Announcements</h2><p class="sub">Notices from your teachers and admin (samples).</p>
-${NEWS.map((n,i)=>`<details ${i===0?'open':''}><summary><span class="tag">${n[0]}</span>${n[1]}${i<2?'<span class="new">New</span>':''}</summary><p>${n[2]}</p></details>`).join('')}</section>
+${allNews().map((n,i)=>`<details ${i===0?'open':''}><summary><span class="tag">${n[0]}</span>${n[1]}${i<2?'<span class="new">New</span>':''}</summary><p>${n[2]}</p></details>`).join('')}</section>
 </div>
 <div class="col">
 <section class="card hubcard"><h2>Study Hub</h2><p>Pick your subject and what you need. Everything the AI teacher taught is in one place.</p>
@@ -126,6 +131,7 @@ $('#bk').onclick=dash;$('#sb').onchange=e=>{sub=e.target.value;hub()};
 document.addEventListener('click',e=>{
 const p=e.target.closest('[data-p]');if(p){pur=p.dataset.p;hub();return}
 const t=e.target.closest('[data-t]');if(t){toast(t.dataset.t);return}
+const f=e.target.closest('[data-f]');if(f){let l=[];try{l=JSON.parse(localStorage.getItem('cm_feedback'))||[]}catch(x){}let w='Student';try{w=JSON.parse(localStorage.getItem('cm_user')).name||w}catch(x){}l.push({msg:f.dataset.f,sub:$('#fsub').value,who:w,ts:Date.now()});localStorage.setItem('cm_feedback',JSON.stringify(l));toast('Sent to your teacher: '+f.dataset.f);return}
 const a=e.target.closest('[data-a]');if(a){started[a.dataset.a]=1;toast('Activity started');hub();return}
 const s=e.target.closest('[data-s]');if(s){const id=s.dataset.s,i=$('#l'+id.replace(/\W/g,''));if(!i.value.trim()){i.style.borderColor='#c2412d';toast('Paste your Google Drive link first.');return}sent[id]=1;toast('Assignment submitted');hub()}});
 dash();

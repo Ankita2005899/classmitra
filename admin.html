@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin dashboard · ClassMitra</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#eef1f4;--card:#fff;--ink:#14212b;--muted:#5b6b78;--line:#d5dce2;--board:#1f4d4a;--deep:#163836;--chalk:#f2efe4;--mark:#e8a317;--alert:#c2412d;--ok:#2f7d4f;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+h1,h2,h3,.brand,.btn{font-family:"Bricolage Grotesque",sans-serif}
+h2{margin:0 0 4px;font-size:1.2rem}p{margin:0}
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;color:var(--ink);text-decoration:none;margin-right:auto}
+.top a.out{color:var(--board);font-weight:600}.hi{color:var(--muted)}
+main{max-width:1320px;margin:0 auto;padding:24px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.col{display:grid;gap:20px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;animation:rise .45s both}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:12px}
+.slide{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory}
+.chip{flex:0 0 auto;scroll-snap-align:start;min-width:112px;text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;color:var(--ink);transition:.2s}
+.chip b{display:block;font-family:"Bricolage Grotesque";font-size:1.15rem}.chip span{font-size:.8rem;color:var(--muted)}
+.chip:hover{border-color:var(--board)}.chip.on{background:var(--board);border-color:var(--board);color:#fff}.chip.on span{color:#cfe0d9}
+.lab{font-weight:600;font-size:.9rem;margin:8px 0 4px}
+.body{animation:slide .35s both}
+.now{border-radius:12px;padding:16px;color:#fff;background:var(--board)}.now.done{background:#4a5b55}.now.idle{background:#33505c}
+.now b{font:700 1.15rem "Bricolage Grotesque"}.now small{display:block;color:#d6e6df}
+.meter{height:7px;background:rgba(255,255,255,.25);border-radius:7px;margin:10px 0 8px;overflow:hidden}.meter i{display:block;height:100%;background:var(--mark);transition:width 1s}
+.msg{background:rgba(0,0,0,.2);border-radius:8px;padding:8px 12px;font-size:.9rem;margin-top:8px}
+select,input[type=text],textarea{padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--board)}
+.sj{padding:12px 0;border-bottom:1px solid var(--line)}.sj:last-child{border:0}
+.sjh{display:flex;justify-content:space-between;gap:8px;font-weight:600}.sjh em{font-style:normal;color:var(--ok)}
+.tp{display:flex;gap:4px;margin-top:8px}.tp i{flex:1;height:14px;border-radius:4px;border:1.5px solid var(--line);background:#fff}.tp i.on{background:var(--ok);border-color:var(--ok)}
+.sjf{font-size:.82rem;color:var(--muted);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}.st{background:var(--paper);border-radius:10px;padding:10px 12px}.st b{display:block;font:800 1.4rem "Bricolage Grotesque"}.st span{font-size:.8rem;color:var(--muted)}.st.bad b{color:var(--alert)}
+details{border:1.5px solid var(--line);border-radius:10px;padding:9px 12px}summary{cursor:pointer;font-weight:600}
+.rolls{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.rolls span{background:#fde8e4;color:var(--alert);border-radius:7px;padding:2px 9px;font-size:.85rem;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:.92rem}th{text-align:left;color:var(--muted);font-weight:500;padding:6px 4px}td{padding:7px 4px;border-top:1px solid var(--line)}
+.btn{border:0;border-radius:9px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;background:var(--mark);color:#2a1d00;transition:transform .15s}.btn:hover{transform:translateY(-2px)}.btn:active{transform:scale(.97)}
+.btn.g{background:#fff;border:1.5px solid var(--line);color:var(--ink)}.btn.sm{padding:5px 11px;font-size:13px}
+.tg{border:0;border-radius:99px;padding:3px 12px;font:600 .8rem inherit;font-family:inherit;cursor:pointer}.tg.y{background:#e2f3ea;color:var(--ok)}.tg.n{background:#fde8e4;color:var(--alert)}
+.drop{display:grid;place-items:center;text-align:center;padding:22px 12px;border:2px dashed var(--line);border-radius:12px;background:var(--paper);cursor:pointer;margin:10px 0}.drop:hover,.drop.over{border-color:var(--board);background:#e4efed}.drop span{color:var(--muted);font-size:.88rem}
+.sr{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.drop:focus-within{border-color:var(--board)}
+.ttbox{border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:380px}.ttbox img{display:block;width:100%}.ttbox embed{display:block;width:100%;height:380px}
+.empty{padding:30px 12px;text-align:center;color:var(--muted);border:1.5px dashed var(--line);border-radius:12px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.cal .h{font-size:.78rem;color:var(--muted)}
+.d{border:1.5px solid var(--line);border-radius:9px;padding:4px 0;font:inherit;background:#fff;cursor:pointer;min-height:48px;color:var(--ink)}.d small{display:block;font-size:1rem;line-height:1.1;font-weight:700}
+.d.ok small{color:var(--ok)}.d.no small{color:var(--alert)}.d.part small{color:var(--mark)}.d.off{background:var(--paper);color:#9aa6af;cursor:default}.d.sel{border-color:var(--board);box-shadow:0 0 0 2px var(--mark)}.d.fut{color:#9aa6af}
+.dd{margin-top:10px;font-size:.9rem;color:var(--muted)}.dd b{color:var(--ink)}
+.fb{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);animation:rise .3s both}.fb:last-child{border:0}
+.fb .m{font-weight:600}.fb small{color:var(--muted)}.pill{white-space:nowrap;font-size:.78rem;font-weight:700;padding:2px 10px;border-radius:99px;background:#fff3d6;color:#7a5200}.pill.e{background:#fde8e4;color:var(--alert)}
+.sum{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ann{border-left:4px solid var(--mark);background:var(--paper);border-radius:8px;padding:9px 12px;margin-top:8px}.ann small{color:var(--muted)}
+textarea{width:100%;resize:vertical}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.3s;z-index:9}.toast.on{opacity:1;transform:translate(-50%,0)}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@keyframes slide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><a class="brand" href="admin.html"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#e8a317"/><path d="M26 13A10 10 0 1 0 26 27" fill="none" stroke="#1f4d4a" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="20" r="3.2" fill="#1f4d4a"/></svg>ClassMitra</a><span class="hi" id="hi">Admin dashboard</span><a class="out" href="login.html">Log out</a></header>
+<main id="app"></main><div class="toast" id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s),J=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const CLS=[['FE','First Year'],['SE','Second Year'],['TE','Third Year'],['BE','Final Year']],DIV=['A','B','C','D'],SUB=[1,2,3,4,5].map(n=>'Subject '+n);
+const SLOT=[[9,10],[10,11],[11,12],[12,13],[14,15]],P2=n=>String(n).padStart(2,'0');
+let cl='FE',dv='A',day=null,demo='',store={};
+try{const u=J('cm_user',null);if(u&&u.name)$('#hi').textContent='Hi, '+u.name.split(' ')[0]}catch(e){}
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)};
+const rng=s=>{let a=0;for(const c of s)a=(a*31+c.charCodeAt(0))>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}};
+function D(){const k=cl+dv;if(!store[k]){const r=rng(k);const sb=SUB.map(s=>({s,done:2+Math.floor(r()*9)}));const tot=60,sub=44+Math.floor(r()*14),rolls=[];while(rolls.length<tot-sub){const n=1+Math.floor(r()*tot);if(!rolls.includes(n))rolls.push(n)}rolls.sort((a,b)=>a-b);
+store[k]={sb,tot,sub,rolls,notes:SUB.map(()=>r()>.3),act:SUB.map(()=>r()>.4),att:SUB.map(()=>Math.round(70+r()*25))}}return store[k]}
+const now=()=>{const d=new Date();if(demo==='run'){d.setHours(10,30,0,0)}if(demo==='end'){d.setHours(13,30,0,0)}return d};
+function nowHtml(){const n=now(),h=n.getHours()+n.getMinutes()/60;if(n.getDay()===0&&!demo)return`<div class="now idle"><b>No lectures today</b><small>Sunday is a holiday.</small></div>`;
+let i=SLOT.findIndex(s=>h>=s[0]&&h<s[1]);if(i>=0){const s=SLOT[i],left=Math.round((s[1]-h)*60),p=Math.round((h-s[0])*100);return`<div class="now"><b>${SUB[i]} is going on</b><small>${P2(s[0])}:00 to ${P2(s[1])}:00 · ends in ${left} min</small><div class="meter"><i style="width:${p}%"></i></div><div class="msg">Message: ${SUB[i]} lecture started at ${P2(s[0])}:00 and will end at ${P2(s[1])}:00.</div></div>`}
+let last=-1;SLOT.forEach((s,j)=>{if(h>=s[1])last=j});const nx=SLOT[last+1];
+if(last<0)return`<div class="now idle"><b>No lecture right now</b><small>First lecture: ${SUB[0]} at ${P2(SLOT[0][0])}:00</small></div>`;
+return`<div class="now done"><b>${SUB[last]} lecture completed</b><small>Ended at ${P2(SLOT[last][1])}:00</small><div class="msg">Message: ${SUB[last]} lecture is completed at ${P2(SLOT[last][1])}:00. ${nx?'Next: '+SUB[last+1]+' at '+P2(nx[0])+':00.':'All lectures are done for today.'}</div></div>`}
+function calHtml(){const n=now(),y=n.getFullYear(),m=n.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),r=rng(cl+dv+'cal'),h=n.getHours()+n.getMinutes()/60;let o=['S','M','T','W','T','F','S'].map(x=>`<div class="h">${x}</div>`).join('')+'<div></div>'.repeat(first);
+const taken=(d)=>SUB.map((_,i)=>{const v=rng(cl+dv+d+i)();return d<n.getDate()?v>.15:d===n.getDate()?(h>=SLOT[i][1]):false});
+for(let d=1;d<=days;d++){const w=new Date(y,m,d).getDay();if(w===0){o+=`<div class="d off" aria-label="Sunday">${d}<small>-</small></div>`;continue}
+if(d>n.getDate()){o+=`<div class="d fut">${d}<small>&nbsp;</small></div>`;continue}
+const t=taken(d),c=t.filter(Boolean).length,cls=c===5?'ok':c===0?'no':'part',ic=c===5?'&#10003;':c===0?'&#10007;':'&#189;';o+=`<button class="d ${cls} ${day===d?'sel':''}" data-d="${d}">${d}<small>${ic}</small></button>`}
+let det='<p class="dd">Click a day to see which lectures were taken.</p>';if(day){const t=taken(day);det=`<p class="dd"><b>${day} ${n.toLocaleString('en',{month:'long'})}</b><br>${SUB.map((s,i)=>`${s}: ${t[i]?'<b style="color:var(--ok)">taken &#10003;</b>':'<b style="color:var(--alert)">not taken &#10007;</b>'}`).join('<br>')}</p>`}
+return`<div class="cal">${o}</div>${det}<p class="sub" style="margin:8px 0 0">&#10003; all lectures taken · &#189; some taken · &#10007; none taken (sample data)</p>`}
+function fbHtml(){const f=J('cm_feedback',[]).slice().reverse();const c={};f.forEach(x=>c[x.msg]=(c[x.msg]||0)+1);
+return`<div class="sum">${Object.keys(c).map(k=>`<span class="pill ${k==='Enough for today'?'e':''}">${k}: ${c[k]}</span>`).join('')||'<span class="sub">No messages from students yet.</span>'}</div>${f.slice(0,6).map(x=>`<div class="fb"><div><div class="m">${x.msg}</div><small>${x.who||'Student'} · ${x.sub} · ${new Date(x.ts).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'})}</small></div></div>`).join('')}${f.length?'<button class="btn g sm" id="clr" style="margin-top:10px">Clear messages</button>':''}`}
+function annHtml(){return J('cm_announcements',[]).slice(0,4).map(a=>`<div class="ann">${a.text}<br><small>Posted by Admin</small></div>`).join('')}
+function page(){const d=D(),sy=Math.round(d.sb.reduce((a,x)=>a+x.done,0)*100/(SUB.length*10));
+$('#app').innerHTML=`<div class="layout"><div class="col">
+<section class="card"><h2>Classes</h2><p class="sub">Slide to pick a class, then a division.</p>
+<div class="slide">${CLS.map(c=>`<button class="chip ${c[0]===cl?'on':''}" data-c="${c[0]}"><b>${c[0]}</b><span>${c[1]}</span></button>`).join('')}</div>
+<div class="lab">Divisions in ${cl}</div><div class="slide">${DIV.map(v=>`<button class="chip ${v===dv?'on':''}" data-v="${v}"><b>Division ${v}</b><span>60 students</span></button>`).join('')}</div></section>
+<div class="body col" key="${cl}${dv}">
+<section class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px"><h2>Now in ${cl} ${dv}</h2><select id="demo" aria-label="Demo time"><option value="">Real time</option><option value="run" ${demo==='run'?'selected':''}>Demo: lecture running</option><option value="end" ${demo==='end'?'selected':''}>Demo: lecture completed</option></select></div><div id="now">${nowHtml()}</div></section>
+<section class="card"><h2>Syllabus progress</h2><p class="sub">${sy}% of the syllabus is complete in ${cl} ${dv}.</p>${d.sb.map(x=>`<div class="sj"><div class="sjh"><span>${x.s}</span><em>${x.done*10}% complete</em></div><div class="tp">${Array.from({length:10},(_,i)=>`<i class="${i<x.done?'on':''}" title="Topic ${i+1}"></i>`).join('')}</div><div class="sjf">${x.done} of 10 topics covered. Next: Topic ${Math.min(x.done+1,10)}.</div></div>`).join('')}</section>
+<section class="card"><h2>Assignment 2: ${SUB[0]}</h2><p class="sub">Submitted through Google Drive links.</p><div class="stats"><div class="st"><b>${d.sub}</b><span>Submitted</span></div><div class="st bad"><b>${d.rolls.length}</b><span>Defaulters</span></div><div class="st"><b>${Math.round(d.sub*100/d.tot)}%</b><span>Completion</span></div></div>
+<details><summary>See defaulter students</summary><div class="rolls">${d.rolls.map(n=>`<span>Roll ${P2(n)}</span>`).join('')}</div><button class="btn sm" id="rem">Send reminder</button></details></section>
+<section class="card"><h2>Notes, activities and attendance</h2><p class="sub">Tap a status to change it.</p><table><tr><th>Subject</th><th>Notes</th><th>Activities</th><th>Attendance</th></tr>${SUB.map((s,i)=>`<tr><td>${s}</td><td><button class="tg ${d.notes[i]?'y':'n'}" data-n="${i}">${d.notes[i]?'Provided':'Not yet'}</button></td><td><button class="tg ${d.act[i]?'y':'n'}" data-a="${i}">${d.act[i]?'Provided':'Not yet'}</button></td><td>${d.att[i]}%</td></tr>`).join('')}</table></section></div></div>
+<div class="col">
+<section class="card"><h2>Timetable: ${cl} ${dv}</h2><p class="sub">Upload it once. Students of this division can view it.</p><label class="drop" id="drop"><input class="sr" id="file" type="file" accept="image/*,.pdf,application/pdf"><b>Drop the timetable here</b><span>or click to choose an image or PDF, up to 8 MB</span></label><div id="tt"></div></section>
+<section class="card"><h2>Live from students</h2><p class="sub">Messages students send during a lecture.</p><div id="fb">${fbHtml()}</div></section>
+<section class="card"><h2>Lecture calendar</h2><p class="sub">${now().toLocaleString('en',{month:'long',year:'numeric'})}</p>${calHtml()}</section>
+<section class="card"><h2>Announcements</h2><p class="sub">Students see these on their dashboard.</p><textarea id="at" rows="2" placeholder="Write an announcement"></textarea><button class="btn" id="post" style="margin-top:8px">Post announcement</button><div id="an">${annHtml()}</div></section></div></div>`;tt()}
+async function tt(){const k='cm_timetable_'+cl+'-'+dv,box=$('#tt'),t=J(k,null);if(!t){box.innerHTML='<div class="empty">No timetable uploaded yet.</div>';return}
+const u=URL.createObjectURL(await(await fetch(t.data)).blob());box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px"><b>${t.name}</b><span><a class="btn g sm" href="${u}" target="_blank" rel="noopener" style="text-decoration:none">Open full size</a> <button class="btn g sm" id="rm">Remove</button></span></div><div class="ttbox">${t.type==='application/pdf'?`<embed src="${u}" type="application/pdf">`:`<img src="${u}" alt="Timetable">`}</div>`}
+function save(f){if(!f)return;if(!(f.type==='application/pdf'||f.type.startsWith('image/')))return toast('Please choose an image or a PDF.');if(f.size>8388608)return toast('File is larger than 8 MB.');const r=new FileReader();r.onload=()=>{try{localStorage.setItem('cm_timetable_'+cl+'-'+dv,JSON.stringify({name:f.name,type:f.type,data:r.result}));toast('Timetable saved for '+cl+' '+dv)}catch(e){toast('File is too big to keep in the browser.')}tt()};r.readAsDataURL(f)}
+document.addEventListener('click',e=>{const g=s=>e.target.closest(s);let x;
+if(x=g('[data-c]')){cl=x.dataset.c;day=null;page();return}if(x=g('[data-v]')){dv=x.dataset.v;day=null;page();return}
+if(x=g('[data-d]')){day=+x.dataset.d;page();return}
+if(x=g('[data-n]')){const d=D(),i=+x.dataset.n;d.notes[i]=!d.notes[i];page();return}if(x=g('[data-a]')){const d=D(),i=+x.dataset.a;d.act[i]=!d.act[i];page();return}
+if(g('#rem'))return toast('Reminder sent to '+D().rolls.length+' students (demo).');
+if(g('#rm')){localStorage.removeItem('cm_timetable_'+cl+'-'+dv);tt();return}
+if(g('#clr')){localStorage.removeItem('cm_feedback');$('#fb').innerHTML=fbHtml();return}
+if(g('#post')){const t=$('#at').value.trim();if(!t)return toast('Write the announcement first.');const a=J('cm_announcements',[]);a.unshift({text:t,ts:Date.now()});localStorage.setItem('cm_announcements',JSON.stringify(a));$('#at').value='';$('#an').innerHTML=annHtml();toast('Announcement posted')}});
+document.addEventListener('change',e=>{if(e.target.id==='demo'){demo=e.target.value;page()}if(e.target.id==='file'){save(e.target.files[0]);e.target.value=''}});
+document.addEventListener('dragover',e=>{if(e.target.closest('#drop')){e.preventDefault();$('#drop').classList.add('over')}});
+document.addEventListener('dragleave',e=>{if(e.target.closest('#drop'))$('#drop').classList.remove('over')});
+document.addEventListener('drop',e=>{if(e.target.closest('#drop')){e.preventDefault();$('#drop').classList.remove('over');save(e.dataTransfer.files[0])}});
+window.addEventListener('storage',e=>{if(e.key==='cm_feedback'&&$('#fb')){$('#fb').innerHTML=fbHtml();toast('New message from a student')}});
+setInterval(()=>{if($('#now'))$('#now').innerHTML=nowHtml()},30000);
+page();
+</script>
+</body>
+</html>

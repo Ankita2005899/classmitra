@@ -126,7 +126,7 @@ function render(){
 }
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)}
 document.addEventListener('click',e=>{
- const dl=e.target.closest('a[data-dash]');if(dl)dl.href=role==='student'?'student.html':'index.html';
+ const dl=e.target.closest('a[data-dash]');if(dl)dl.href=role==='student'?'student.html':'admin.html';
  const tt=e.target.closest('[data-t]');if(tt){step+=tt.dataset.t==='next'?1:-1;render();return}
  const r=e.target.closest('[data-role]');if(r){role=r.dataset.role;render();return}
  const m=e.target.closest('[data-mode]');if(m){mode=m.dataset.mode;render();return}
