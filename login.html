@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in · ClassMitra</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#eef1f4;--card:#fff;--ink:#14212b;--muted:#5b6b78;--line:#d5dce2;--board:#1f4d4a;--deep:#163836;--chalk:#f2efe4;--mark:#e8a317;--alert:#c2412d;--ok:#2f7d4f;--r:12px}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;font:400 16px/1.5 "IBM Plex Sans",system-ui,sans-serif;color:var(--ink);background:var(--paper)}
+h1,h2,h3,.brand,.seg button{font-family:"Bricolage Grotesque",sans-serif}
+.left{background:var(--board);color:var(--chalk);padding:48px;display:flex;flex-direction:column;justify-content:center;gap:28px;position:relative;overflow:hidden}
+.left::after{content:"";position:absolute;right:-90px;bottom:-90px;width:300px;height:300px;border-radius:50%;border:2px dashed rgba(242,239,228,.18)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:24px;color:#fff;text-decoration:none}
+.left h1{font-size:clamp(30px,3.6vw,46px);line-height:1.1;margin:0;font-weight:800;animation:rise .7s both}
+.left h1 em{font-style:normal;color:var(--mark)}
+.left ul{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:430px}
+.left li{background:var(--deep);border-left:4px solid var(--mark);border-radius:10px;padding:12px 16px;animation:rise .5s both}
+.left li:nth-child(2){animation-delay:.12s}.left li:nth-child(3){animation-delay:.24s}
+.right{display:grid;place-items:center;padding:32px 20px}
+.card{width:100%;max-width:480px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 20px 50px rgba(20,33,43,.08);animation:rise .6s .1s both}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--paper);border-radius:12px;padding:4px;position:relative}
+.seg button{position:relative;z-index:1;border:0;background:none;padding:10px;font-weight:700;font-size:15px;color:var(--muted);cursor:pointer;border-radius:9px;transition:color .25s}
+.seg button[aria-selected=true]{color:#fff}
+.seg i{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);background:var(--board);border-radius:9px;transition:transform .3s cubic-bezier(.3,.8,.3,1)}
+.seg.r2 i{transform:translateX(100%)}
+.who{margin:18px 0 4px;font-size:.88rem;color:var(--muted)}
+h2{margin:6px 0 2px;font-size:1.6rem}
+.sub{margin:0 0 16px;color:var(--muted)}
+.sw{display:grid;gap:10px}
+.sbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font:500 15px inherit;font-family:inherit;cursor:pointer;color:var(--ink);transition:transform .15s,border-color .15s,background .15s}
+.sbtn:hover{border-color:var(--board);background:#f6faf9;transform:translateY(-2px)}.sbtn:active{transform:scale(.98)}
+.edu{border-color:var(--mark);background:#fff9ea}.edu small{display:block;color:var(--muted);font-size:.78rem}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.85rem;margin:16px 0}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;animation:swap .35s both}
+.fl{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:500}.fl.full{grid-column:1/-1}
+input,select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;font:400 16px inherit;font-family:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:none;border-color:var(--board);box-shadow:0 0 0 3px rgba(31,77,74,.15)}
+.bad{border-color:var(--alert)}
+.err{color:var(--alert);font-weight:500;min-height:22px;margin:10px 0 0;font-size:.9rem}
+.go{width:100%;margin-top:6px;padding:13px;border:0;border-radius:10px;background:var(--mark);color:#2a1d00;font:700 17px "Bricolage Grotesque";cursor:pointer;transition:transform .15s,box-shadow .15s}
+.go:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(232,163,23,.4)}
+.sw2{margin:16px 0 0;text-align:center;color:var(--muted);font-size:.92rem}.sw2 button{border:0;background:none;color:var(--board);font:600 inherit;font-family:inherit;cursor:pointer;text-decoration:underline}
+.done{text-align:center;padding:14px 0;animation:rise .5s both}
+.tick{width:74px;height:74px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin:0 auto 14px;animation:pop .5s both}
+.tick path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s .3s forwards}
+.link{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:10px;background:var(--board);color:#fff;text-decoration:none;font-weight:600}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;max-width:92vw;opacity:0;pointer-events:none;transition:.3s;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.dots{display:flex;gap:6px;margin:6px 0 22px}.dots i{flex:1;height:5px;border-radius:5px;background:var(--line);transition:background .3s}.dots i.on{background:var(--mark)}
+.slide{animation:swap .4s both;min-height:230px}.ticon{width:68px;height:68px;border-radius:18px;background:#e4efed;display:grid;place-items:center;margin-bottom:14px;animation:pop .45s both}
+.cnt{margin:0;color:var(--muted);font-size:.85rem}.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px}
+.nav .go{width:auto;min-width:150px;margin:0;padding:12px 26px}.lnk{text-decoration:none;text-align:center;display:inline-block}
+.back{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:11px 22px;font:600 15px inherit;font-family:inherit;cursor:pointer}.back:hover{border-color:var(--board)}
+.sw2 a{color:var(--muted)}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes swap{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(max-width:860px){body{grid-template-columns:1fr}.left{padding:28px 22px;gap:16px}.left ul{display:none}}
+@media(max-width:480px){.fields{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<section class="left">
+<a class="brand" href="index.html"><svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#e8a317"/><path d="M26 13A10 10 0 1 0 26 27" fill="none" stroke="#1f4d4a" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="20" r="3.2" fill="#1f4d4a"/></svg>ClassMitra</a>
+<h1 id="lh"></h1>
+<ul id="lp"></ul>
+</section>
+<main class="right"><div class="card" id="card"></div></main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s);
+const COPY={student:{h:'Join your class, <em>stay on track.</em>',p:['Mark attendance with your own QR','Ask a doubt and get a simpler explanation','See your timetable in one place']},
+admin:{h:'Run your class, <em>without the extra work.</em>',p:['Upload a PPT and let the AI teacher explain it','Watch attention and approve call-outs','Manage timetable and attendance for every division']}};
+const ICON={
+g:'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>',
+gh:'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>',
+ms:'<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9.5" height="9.5" fill="#f25022"/><rect x="12.5" y="2" width="9.5" height="9.5" fill="#7fba00"/><rect x="2" y="12.5" width="9.5" height="9.5" fill="#00a4ef"/><rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#ffb900"/></svg>',
+dl:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f4d4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>'};
+let role='student',mode='login',done=null,who='',step=0;
+const inp=(id,l,t='text',p='',full=false)=>`<label class="fl ${full?'full':''}">${l}<input id="${id}" type="${t}" placeholder="${p}" data-req></label>`;
+const sel=(id,l,o)=>`<label class="fl"><span>${l}</span><select id="${id}">${o.map(x=>`<option>${x}</option>`).join('')}</select></label>`;
+const social=`<div class="sw">
+<button class="sbtn" data-s="Google">${ICON.g}Continue with Google</button>
+<button class="sbtn" data-s="GitHub">${ICON.gh}Continue with GitHub</button>
+<button class="sbtn edu" data-s="your college account (Microsoft 365)">${ICON.ms}<span>Continue with college account<small>Microsoft 365 school or college email</small></span></button>
+<button class="sbtn edu" data-s="DigiLocker">${ICON.dl}<span>Continue with DigiLocker<small>Verified student and teacher identity</small></span></button></div>`;
+function fields(){
+ if(mode==='login')return `<div class="fields">${inp('id','Email or '+(role==='student'?'roll number':'employee ID'),'text','you@college.edu',true)}${inp('pw','Password','password','Enter your password',true)}</div>`;
+ if(role==='admin')return `<div class="fields">${inp('nm','Full name','text','Your full name')}${inp('roll','Employee ID','text','Your employee ID')}${inp('col','College name','text','Your college',true)}
+ ${sel('des','Designation',['Teacher','Head of Department','Principal','Administrative staff'])}${inp('depts','Departments you manage','text','For example, AI &amp; DS, IT')}${inp('em','Email','email','you@college.edu')}${inp('ph','WhatsApp number','tel','10-digit number')}${inp('pw','Create password','password','Minimum 8 characters',true)}</div>`;
+ return `<div class="fields">${inp('nm','Full name','text','Your full name',true)}${inp('col','College name','text','Your college',true)}
+ ${sel('dep','Department',['AI &amp; Data Science','Computer Engineering','Information Technology','E&amp;TC','Mechanical','Civil'])}${sel('div','Division',['A','B','C','D'])}
+ ${inp('roll','Roll number','text','For example, 21')}${inp('em','Email','email','you@college.edu')}${inp('pw','Create password','password','Minimum 8 characters',true)}</div>`;}
+const IC={live:'<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M10 8.5l5 2.5-5 2.5z"/>',slides:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21l4-4 4 4"/>',rec:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',task:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',notes:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 9h6M9 13h6"/>',video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',book:'<path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',chart:'<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>'};
+const TOUR={student:[['live','Attend live lectures','Join the class, mark attendance with your own QR, and follow the AI teacher live.'],['slides','Get the PPTs the AI teacher taught','Every lecture\'s slides are saved under the subject, so you can revise what was explained.'],['rec','Watch lecture recordings','Missed a class, or want to revise? Replay the full lecture any time.'],['task','Submit your assignments','Upload your file or share a Google Drive link, and see everything you have submitted.'],['notes','Notes and activities for every topic','Open the notes of a topic and do the practice activity the AI teacher gives you.'],['video','Related educational videos','Get useful videos for your subject, picked for the topics you still need to understand.']],
+admin:[['people','Manage all student details','See students by department, class and division, with attendance and attention in one place.'],['book','Set the subject list','Keep the default subjects for every class and assign a teacher to each one.'],['cal','Plan lectures and the schedule','Upload the timetable and schedule lectures for every division.'],['notes','Share notes and PPTs','Upload them once, and students get them under the right subject and topic.'],['task','Track assignments','See who has submitted and who is pending, and open each submission, including Drive links.'],['chart','Run the college from one view','Check attendance, attention reports and lecture activity across departments.']]};
+function render(){
+ $('#lh').innerHTML=COPY[role].h;$('#lp').innerHTML=COPY[role].p.map(x=>`<li>${x}</li>`).join('');
+ const c=$('#card');
+ if(done==='tour'){const T=TOUR[role],n=T.length,t=T[step],last=step===n-1;
+ c.innerHTML=`<div class="tour"><p class="who">Welcome${who?', '+who.split(' ')[0]:''}. Your ${role} account is ready.</p>
+ <div class="dots" aria-label="Step ${step+1} of ${n}">${T.map((_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>
+ <div class="slide" key="${step}"><div class="ticon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1f4d4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[t[0]]}</svg></div>
+ <p class="cnt">${step+1} of ${n}</p><h2>${t[1]}</h2><p class="sub">${t[2]}</p></div>
+ <div class="nav">${step?'<button class="back" data-t="back">Back</button>':'<span></span>'}${last?'<a class="go lnk" href="index.html">Open dashboard</a>':'<button class="go" data-t="next">Next</button>'}</div>
+ ${last?'':'<p class="sw2"><a href="index.html">Skip and open dashboard</a></p>'}</div>`;return}
+ if(done){c.innerHTML=`<div class="done"><div class="tick"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+ <h2>${done==='login'?'You are logged in':'Your account is ready'}</h2>
+ <p class="sub">${done==='login'?'Welcome back':'Welcome'}, ${role==='student'?'student':'admin'}. This is a demo, so nothing is saved yet.</p>
+ <a class="link" href="index.html">Open dashboard</a><p class="sw2"><button id="again">Back to log in</button></p></div>`;
+ $('#again').onclick=()=>{done=null;mode='login';render()};return;}
+ c.innerHTML=`<div class="seg ${role==='admin'?'r2':''}" role="tablist" aria-label="Account type"><i></i>
+ <button role="tab" data-role="student" aria-selected="${role==='student'}">Student</button><button role="tab" data-role="admin" aria-selected="${role==='admin'}">Admin</button></div>
+ <p class="who">${role==='student'?'For students of a class':'For teachers, HODs and institute admins'}</p>
+ <h2>${mode==='login'?'Welcome back':'Create your account'}</h2>
+ <p class="sub">${mode==='login'?'Log in to your ClassMitra '+role+' account.':'Fill in your '+role+' details to get started.'}</p>
+ ${mode==='login'?social+'<div class="or">or use your email</div>':''}
+ ${fields()}<p class="err" id="err" role="alert"></p>
+ <button class="go" id="go">${mode==='login'?'Log in':'Create '+role+' account'}</button>
+ <p class="sw2">${mode==='login'?'New to ClassMitra? <button data-mode="signup">Create account</button>':'Already have an account? <button data-mode="login">Log in</button>'}</p>`;
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)}
+document.addEventListener('click',e=>{
+ const tt=e.target.closest('[data-t]');if(tt){step+=tt.dataset.t==='next'?1:-1;render();return}
+ const r=e.target.closest('[data-role]');if(r){role=r.dataset.role;render();return}
+ const m=e.target.closest('[data-mode]');if(m){mode=m.dataset.mode;render();return}
+ const s=e.target.closest('[data-s]');if(s){toast('Demo only: sign in with '+s.dataset.s+' will work once the backend is connected.');return}
+ if(e.target.id==='go'){
+  const req=[...document.querySelectorAll('[data-req]')];let bad=0;
+  req.forEach(i=>{const x=!i.value.trim();i.classList.toggle('bad',x);if(x)bad++});
+  const pw=$('#pw');
+  if(bad){$('#err').textContent='Please fill all the highlighted fields.';return}
+  if(mode==='signup'&&pw.value.length<8){pw.classList.add('bad');$('#err').textContent='Password must be at least 8 characters.';return}
+  if(mode==='signup'){who=$('#nm').value.trim();step=0;done='tour'}else done=mode;render();}
+});
+render();
+</script>
+</body>
+</html>
