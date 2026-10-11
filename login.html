@@ -107,12 +107,12 @@ function render(){
  <div class="dots" aria-label="Step ${step+1} of ${n}">${T.map((_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>
  <div class="slide" key="${step}"><div class="ticon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1f4d4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[t[0]]}</svg></div>
  <p class="cnt">${step+1} of ${n}</p><h2>${t[1]}</h2><p class="sub">${t[2]}</p></div>
- <div class="nav">${step?'<button class="back" data-t="back">Back</button>':'<span></span>'}${last?'<a class="go lnk" href="index.html">Open dashboard</a>':'<button class="go" data-t="next">Next</button>'}</div>
- ${last?'':'<p class="sw2"><a href="index.html">Skip and open dashboard</a></p>'}</div>`;return}
+ <div class="nav">${step?'<button class="back" data-t="back">Back</button>':'<span></span>'}${last?'<a class="go lnk" href="index.html" data-dash>Open dashboard</a>':'<button class="go" data-t="next">Next</button>'}</div>
+ ${last?'':'<p class="sw2"><a href="index.html" data-dash>Skip and open dashboard</a></p>'}</div>`;return}
  if(done){c.innerHTML=`<div class="done"><div class="tick"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
  <h2>${done==='login'?'You are logged in':'Your account is ready'}</h2>
  <p class="sub">${done==='login'?'Welcome back':'Welcome'}, ${role==='student'?'student':'admin'}. This is a demo, so nothing is saved yet.</p>
- <a class="link" href="index.html">Open dashboard</a><p class="sw2"><button id="again">Back to log in</button></p></div>`;
+ <a class="link" href="index.html" data-dash>Open dashboard</a><p class="sw2"><button id="again">Back to log in</button></p></div>`;
  $('#again').onclick=()=>{done=null;mode='login';render()};return;}
  c.innerHTML=`<div class="seg ${role==='admin'?'r2':''}" role="tablist" aria-label="Account type"><i></i>
  <button role="tab" data-role="student" aria-selected="${role==='student'}">Student</button><button role="tab" data-role="admin" aria-selected="${role==='admin'}">Admin</button></div>
@@ -126,6 +126,7 @@ function render(){
 }
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)}
 document.addEventListener('click',e=>{
+ const dl=e.target.closest('a[data-dash]');if(dl)dl.href=role==='student'?'student.html':'index.html';
  const tt=e.target.closest('[data-t]');if(tt){step+=tt.dataset.t==='next'?1:-1;render();return}
  const r=e.target.closest('[data-role]');if(r){role=r.dataset.role;render();return}
  const m=e.target.closest('[data-mode]');if(m){mode=m.dataset.mode;render();return}
@@ -136,7 +137,7 @@ document.addEventListener('click',e=>{
   const pw=$('#pw');
   if(bad){$('#err').textContent='Please fill all the highlighted fields.';return}
   if(mode==='signup'&&pw.value.length<8){pw.classList.add('bad');$('#err').textContent='Password must be at least 8 characters.';return}
-  if(mode==='signup'){who=$('#nm').value.trim();step=0;done='tour'}else done=mode;render();}
+  const nm=mode==='signup'?$('#nm').value.trim():$('#id').value.trim();try{localStorage.setItem('cm_user',JSON.stringify({role,name:nm}))}catch(e){}if(mode==='signup'){who=nm;step=0;done='tour'}else done=mode;render();}
 });
 render();
 </script>

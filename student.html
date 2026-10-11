@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student dashboard · ClassMitra</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#eef1f4;--card:#fff;--ink:#14212b;--muted:#5b6b78;--line:#d5dce2;--board:#1f4d4a;--deep:#163836;--chalk:#f2efe4;--mark:#e8a317;--alert:#c2412d;--ok:#2f7d4f;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+h1,h2,h3,.brand,.btn{font-family:"Bricolage Grotesque",sans-serif}
+h2{margin:0 0 4px;font-size:1.25rem}h3{margin:0;font-size:1.05rem}p{margin:0}
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.3rem;color:var(--ink);text-decoration:none;margin-right:auto}
+.hi{color:var(--muted)}.top a.out{color:var(--board);font-weight:600}
+main{max-width:1240px;margin:0 auto;padding:24px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.col{display:grid;gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;animation:rise .5s both}
+.col+.col .card:nth-child(2){animation-delay:.08s}
+.sub{color:var(--muted);font-size:.92rem;margin-bottom:14px}
+.hubcard{background:var(--board);color:var(--chalk);border:0;position:relative;overflow:hidden}
+.hubcard h2{font-size:1.7rem;color:#fff}.hubcard p{color:#cfe0d9;max-width:460px}
+.hubcard .chips{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px}
+.hubcard .chips span{background:var(--deep);border-radius:99px;padding:5px 14px;font-size:.88rem}
+.btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;font-size:15px;cursor:pointer;background:var(--mark);color:#2a1d00;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(232,163,23,.35)}.btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}.btn.sm{padding:7px 14px;font-size:14px}
+.att{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.ring{position:relative;width:110px;height:110px}.ring svg{transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}.ring .bg{stroke:#e3e9e6}.ring .fg{stroke:var(--ok);stroke-linecap:round;stroke-dasharray:264;transition:stroke-dashoffset 1s}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font:800 1.5rem "Bricolage Grotesque"}
+.bars{display:grid;gap:8px}.bar{font-size:.85rem}.bar div{height:7px;background:#e3e9e6;border-radius:7px;margin-top:2px;overflow:hidden}.bar i{display:block;height:100%;background:var(--board);border-radius:7px;transition:width .8s}
+.mark{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+select,input[type=text]{padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+select:focus,input:focus{outline:none;border-color:var(--board)}
+details{border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:10px;transition:border-color .2s}
+details[open]{border-color:var(--board);background:#f6faf9}summary{cursor:pointer;font-weight:600;display:flex;gap:10px;align-items:center}
+details p{margin-top:8px;color:var(--muted)}
+.tag{font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:99px;background:#fff3d6;color:#7a5200}
+.new{margin-left:auto;font-size:.75rem;color:var(--alert);font-weight:700}
+.ttbox{border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:420px;background:#fff}.ttbox img{display:block;width:100%}.ttbox embed{display:block;width:100%;height:420px}
+.empty{display:grid;place-items:center;text-align:center;gap:4px;padding:40px 16px;border:1.5px dashed var(--line);border-radius:12px;color:var(--muted)}.empty b{color:var(--ink)}
+.row{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+/* Study hub */
+.hub{animation:rise .4s both}.back{margin-bottom:16px}
+.hubgrid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:20px;align-items:start}
+.lbl{display:block;font-weight:600;margin:0 0 6px}.hubgrid select{width:100%}
+.purp{display:grid;gap:10px;margin-top:16px}
+.po{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;cursor:pointer;font:inherit;transition:.2s}
+.po b{display:block;font-family:"Bricolage Grotesque"}.po span{color:var(--muted);font-size:.86rem}
+.po:hover{border-color:var(--board)}.po.on{border-color:var(--board);background:#e2f3ea;box-shadow:0 0 0 3px var(--mark)}
+.item{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line);animation:rise .35s both}
+.item:last-child{border:0}.item small{display:block;color:var(--muted)}.item .go{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item input{width:210px}.done{color:var(--ok);font-weight:600}
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:10px}
+.vid{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;transition:transform .2s,border-color .2s;text-align:left;padding:0;font:inherit}
+.vid:hover{transform:translateY(-3px);border-color:var(--board)}.vid .th{height:84px;background:var(--board);display:grid;place-items:center}.vid div.t{padding:10px 12px}.vid small{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;max-width:92vw;opacity:0;pointer-events:none;transition:.3s;z-index:9}.toast.on{opacity:1;transform:translate(-50%,0)}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media(max-width:900px){.layout,.hubgrid{grid-template-columns:1fr}.att{grid-template-columns:1fr;justify-items:center}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+<a class="brand" href="student.html"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#e8a317"/><path d="M26 13A10 10 0 1 0 26 27" fill="none" stroke="#1f4d4a" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="20" r="3.2" fill="#1f4d4a"/></svg>ClassMitra</a>
+<span class="hi" id="hi">Student dashboard</span><a class="out" href="login.html">Log out</a>
+</header>
+<main id="app"></main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s);
+const SUB=[1,2,3,4,5,6].map(n=>'Subject '+n);
+const att=SUB.map((s,i)=>({s,p:[18,15,12,19,14,10][i],t:[20,18,16,20,15,14][i]}));
+const NEWS=[['Exam','Exam schedule','The mid-semester exam schedule will be shared by your admin here.'],['Assignment','Assignment due soon','Share your Google Drive link for the Subject 1 assignment from the Study Hub before the due date.'],['Lecture','Lecture time changed','The live lecture of Subject 3 has moved to the next slot.'],['Notice','College notice','Please check this section daily for notices from your college.']];
+const PUR=[{id:'ppt',n:'Lecture PPTs',d:'Slides the AI teacher taught'},{id:'asg',n:'Assignments',d:'Submit with a Drive link and track it'},{id:'notes',n:'Notes',d:'Topic-wise notes for revision'},{id:'act',n:'Activities',d:'Practice given by the AI teacher'}];
+let sub=SUB[0],pur='ppt',sent={},started={};
+try{const u=JSON.parse(localStorage.getItem('cm_user')||'null');if(u&&u.name)$('#hi').textContent='Hi, '+u.name.split(' ')[0]}catch(e){}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)}
+const pct=()=>{const p=att.reduce((a,x)=>a+x.p,0),t=att.reduce((a,x)=>a+x.t,0);return Math.round(p*100/t)};
+function dash(){
+$('#app').innerHTML=`<div class="layout">
+<div class="col">
+<section class="card"><h2>Attendance</h2><p class="sub">Your attendance across subjects (sample numbers).</p>
+<div class="att"><div class="ring"><svg width="110" height="110" viewBox="0 0 110 110"><circle class="bg" cx="55" cy="55" r="42"/><circle class="fg" id="fg" cx="55" cy="55" r="42" style="stroke-dashoffset:264"/></svg><b id="pc">0%</b></div>
+<div class="bars" id="bars"></div></div>
+<div class="mark"><select id="msub" aria-label="Subject">${SUB.map(s=>`<option>${s}</option>`).join('')}</select><button class="btn" id="mk">Mark my attendance</button></div>
+<p class="sub" style="margin:10px 0 0">Works only when the class QR is open inside the classroom.</p></section>
+<section class="card"><h2>Announcements</h2><p class="sub">Notices from your teachers and admin (samples).</p>
+${NEWS.map((n,i)=>`<details ${i===0?'open':''}><summary><span class="tag">${n[0]}</span>${n[1]}${i<2?'<span class="new">New</span>':''}</summary><p>${n[2]}</p></details>`).join('')}</section>
+</div>
+<div class="col">
+<section class="card hubcard"><h2>Study Hub</h2><p>Pick your subject and what you need. Everything the AI teacher taught is in one place.</p>
+<div class="chips"><span>Lecture PPTs</span><span>Assignments</span><span>Notes</span><span>Activities</span><span>Advanced videos</span></div>
+<button class="btn" id="open">Open Study Hub</button></section>
+<section class="card"><div class="row"><div><h2>Timetable</h2><p class="sub" style="margin:0">Uploaded by your admin. You can only view it.</p></div><select id="ttsel" aria-label="Division"></select></div><div id="tt"></div></section>
+</div></div>`;
+drawAtt();$('#open').onclick=hub;$('#mk').onclick=()=>{const s=$('#msub').value,a=att.find(x=>x.s===s);a.p++;a.t++;drawAtt();toast('Marked present for '+s)};timetable();
+}
+function drawAtt(){const p=pct();$('#bars').innerHTML=att.map(a=>`<div class="bar">${a.s}: ${a.p}/${a.t}<div><i style="width:${Math.round(a.p*100/a.t)}%"></i></div></div>`).join('');
+requestAnimationFrame(()=>{$('#fg').style.strokeDashoffset=264*(1-p/100);$('#pc').textContent=p+'%'})}
+function timetable(){const keys=Object.keys(localStorage).filter(k=>k.startsWith('cm_timetable_')),sel=$('#ttsel'),box=$('#tt');
+if(!keys.length){sel.hidden=true;box.innerHTML='<div class="empty"><b>No timetable yet</b><span>Your admin has not uploaded the timetable.</span></div>';return}
+sel.innerHTML=keys.map(k=>`<option value="${k}">${k.replace('cm_timetable_','').toUpperCase().replace(/-/g,' / ')}</option>`).join('');
+const show=async()=>{let t;try{t=JSON.parse(localStorage.getItem(sel.value))}catch(e){}if(!t)return;const u=URL.createObjectURL(await (await fetch(t.data)).blob());
+box.innerHTML=`<div class="ttbox">${t.type==='application/pdf'?`<embed src="${u}" type="application/pdf">`:`<img src="${u}" alt="Timetable">`}</div><p class="sub" style="margin-top:8px"><a href="${u}" target="_blank" rel="noopener">Open full size</a></p>`};
+sel.onchange=show;show()}
+function items(){const k=`${sub}|${pur}`;return [1,2,3,4].map(i=>{const id=k+i,t=`${sub}: Topic ${i}`;
+if(pur==='ppt')return `<div class="item"><div><b>${t}</b><small>Slides taught by the AI teacher</small></div><div class="go"><button class="btn ghost sm" data-t="Demo: the PPT opens here once lectures are stored.">Open</button><button class="btn ghost sm" data-t="Demo: the PPT downloads here once lectures are stored.">Download</button></div></div>`;
+if(pur==='notes')return `<div class="item"><div><b>${t}</b><small>Notes for revision</small></div><div class="go"><button class="btn ghost sm" data-t="Demo: the notes open here once your teacher uploads them.">Read notes</button></div></div>`;
+if(pur==='act')return `<div class="item"><div><b>Activity ${i}: ${t}</b><small>Given by the AI teacher</small></div><div class="go">${started[id]?'<span class="done">Started</span>':`<button class="btn sm" data-a="${id}">Start activity</button>`}</div></div>`;
+return `<div class="item"><div><b>Assignment ${i}: ${t}</b><small>${sent[id]?'Submitted':'Pending'}</small></div><div class="go">${sent[id]?'<span class="done">Drive link submitted</span>':`<input type="text" id="l${id.replace(/\W/g,'')}" placeholder="Paste Google Drive link" aria-label="Drive link"><button class="btn sm" data-s="${id}">Submit</button>`}</div></div>`}).join('')}
+function hub(){
+$('#app').innerHTML=`<div class="hub"><button class="btn ghost back" id="bk">&larr; Back to dashboard</button>
+<div class="hubgrid"><section class="card"><h2>Study Hub</h2><p class="sub">Choose what you want to study.</p>
+<label class="lbl" for="sb">Select subject</label><select id="sb">${SUB.map(s=>`<option ${s===sub?'selected':''}>${s}</option>`).join('')}</select>
+<div class="lbl" style="margin-top:16px">Select purpose</div><div class="purp">${PUR.map(p=>`<button class="po ${p.id===pur?'on':''}" data-p="${p.id}"><b>${p.n}</b><span>${p.d}</span></button>`).join('')}</div></section>
+<div class="col"><section class="card"><h2>${PUR.find(p=>p.id===pur).n} for ${sub}</h2><p class="sub">Sample items. Real content comes from your teachers once the backend is connected.</p>${items()}</section>
+<section class="card"><h2>Advanced topic videos</h2><p class="sub">Go deeper into ${sub}, picked for what you still need to understand.</p>
+<div class="vids">${[1,2,3].map(i=>`<button class="vid" data-t="Demo: the video plays here once related videos are connected."><div class="th"><svg width="34" height="34" viewBox="0 0 24 24" fill="#f2efe4"><path d="M8 5v14l11-7z"/></svg></div><div class="t"><b>Advanced: Topic ${i}</b><br><small>${sub} · ${6+i*3} min</small></div></button>`).join('')}</div></section></div></div></div>`;
+$('#bk').onclick=dash;$('#sb').onchange=e=>{sub=e.target.value;hub()};
+}
+document.addEventListener('click',e=>{
+const p=e.target.closest('[data-p]');if(p){pur=p.dataset.p;hub();return}
+const t=e.target.closest('[data-t]');if(t){toast(t.dataset.t);return}
+const a=e.target.closest('[data-a]');if(a){started[a.dataset.a]=1;toast('Activity started');hub();return}
+const s=e.target.closest('[data-s]');if(s){const id=s.dataset.s,i=$('#l'+id.replace(/\W/g,''));if(!i.value.trim()){i.style.borderColor='#c2412d';toast('Paste your Google Drive link first.');return}sent[id]=1;toast('Assignment submitted');hub()}});
+dash();
+</script>
+</body>
+</html>
