@@ -70,6 +70,12 @@ textarea{width:100%;resize:vertical}
 .li{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}.big{font:800 2rem "Bricolage Grotesque";color:var(--ok)}
 .d small.c{font-size:.72rem;font-weight:500;color:var(--muted)}.d{min-height:56px}
 .sc{font-size:.75rem;color:var(--muted)}</style>
+<script>
+(function(){try{var u=JSON.parse(localStorage.getItem('cm_user')||'null'),t=localStorage.getItem('cm_token');
+if(!u||!t||u.role!=='admin'){location.replace('login.html');return}
+var api=location.protocol==='file:'?'http://127.0.0.1:8000':location.hostname.endsWith('github.io')?'https://classmitra.onrender.com':'';
+fetch(api+'/api/auth/me',{headers:{Authorization:'Bearer '+t}}).then(function(r){if(r.status===401){localStorage.removeItem('cm_token');localStorage.removeItem('cm_user');location.replace('login.html')}}).catch(function(){})}catch(e){location.replace('login.html')}})();
+</script>
 </head>
 <body>
 <header class="top"><a class="brand" href="admin.html#/"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#e8a317"/><path d="M26 13A10 10 0 1 0 26 27" fill="none" stroke="#1f4d4a" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="20" r="3.2" fill="#1f4d4a"/></svg>ClassMitra</a><span class="hi" id="hi">Admin dashboard</span><a class="out" href="login.html">Log out</a></header>

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -6,20 +7,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .auth import router as auth_router
 from .config import get_settings
+from .db import Base, engine
 from .data import DEPARTMENTS
 
 settings = get_settings()
 
-app = FastAPI(title="ClassMitra API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_app):
+    """On start: create the students and admins tables if they do not exist."""
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as err:  # the server still starts; login shows an error
+        print("Database is not ready:", err)
+    yield
+
+
+app = FastAPI(title="ClassMitra API", version="0.1.0", lifespan=lifespan)
 
 # CORS: lets the website (a different address) call this API from the browser.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+app.include_router(auth_router)
 
 
 @app.get("/api/health")

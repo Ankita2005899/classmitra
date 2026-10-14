@@ -3,3 +3,7 @@ uvicorn[standard]==0.54.0
 pydantic-settings==2.15.0
 pytest==9.1.1
 httpx==0.28.1
+SQLAlchemy>=2.0.44,<2.1
+PyMySQL>=1.1.1
+cryptography>=45.0
+PyJWT>=2.10

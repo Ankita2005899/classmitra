@@ -74,6 +74,21 @@ input:focus,select:focus{outline:none;border-color:var(--board);box-shadow:0 0 0
 <div class="toast" id="toast" role="status"></div>
 <script>
 const $=s=>document.querySelector(s);
+localStorage.removeItem('cm_token');
+const API=location.protocol==='file:'?'http://127.0.0.1:8000':location.hostname.endsWith('github.io')?'https://classmitra.onrender.com':'';
+async function send(){
+ const v=i=>($('#'+i)||{value:''}).value.trim(),g=$('#go'),txt=g.textContent,pw=$('#pw').value;
+ const url=mode==='login'?'/api/auth/login':role==='student'?'/api/auth/signup/student':'/api/auth/signup/admin';
+ const body=mode==='login'?{role,identifier:v('id'),password:pw}:role==='student'?{name:v('nm'),college:v('col'),department:v('dep'),division:v('div'),roll_number:v('roll'),email:v('em'),password:pw}:{name:v('nm'),employee_id:v('roll'),college:v('col'),designation:v('des'),departments:v('depts'),email:v('em'),phone:v('ph'),password:pw};
+ const fail=m=>{$('#err').textContent=m};
+ g.disabled=true;g.textContent='Please wait...';
+ try{
+  const r=await fetch(API+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json().catch(()=>({}));
+  if(!r.ok){const d=j.detail;fail(Array.isArray(d)?'Please check: '+d[0].loc[d[0].loc.length-1]+' - '+d[0].msg:d||'Something went wrong. Try again.');g.disabled=false;g.textContent=txt;return}
+  localStorage.setItem('cm_token',j.token);localStorage.setItem('cm_user',JSON.stringify({role:j.role,name:j.name}));
+  if(mode==='signup'){who=j.name;step=0;done='tour';render()}else location.href=j.role==='student'?'student.html':'admin.html';
+ }catch(e){fail('Cannot reach the server. Start the backend, then open this page from http://127.0.0.1:8000');g.disabled=false;g.textContent=txt}
+}
 const COPY={student:{h:'Join your class, <em>stay on track.</em>',p:['Mark attendance with your own QR','Ask a doubt and get a simpler explanation','See your timetable in one place']},
 admin:{h:'Run your class, <em>without the extra work.</em>',p:['Upload a PPT and let the AI teacher explain it','Watch attention and approve call-outs','Manage timetable and attendance for every division']}};
 const ICON={
@@ -137,7 +152,7 @@ document.addEventListener('click',e=>{
   const pw=$('#pw');
   if(bad){$('#err').textContent='Please fill all the highlighted fields.';return}
   if(mode==='signup'&&pw.value.length<8){pw.classList.add('bad');$('#err').textContent='Password must be at least 8 characters.';return}
-  const nm=mode==='signup'?$('#nm').value.trim():$('#id').value.trim();try{localStorage.setItem('cm_user',JSON.stringify({role,name:nm}))}catch(e){}if(mode==='signup'){who=nm;step=0;done='tour'}else done=mode;render();}
+  send();return}
 });
 render();
 </script>

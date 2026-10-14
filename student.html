@@ -64,6 +64,12 @@ details p{margin-top:8px;color:var(--muted)}
 @media(max-width:900px){.layout,.hubgrid{grid-template-columns:1fr}.att{grid-template-columns:1fr;justify-items:center}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<script>
+(function(){try{var u=JSON.parse(localStorage.getItem('cm_user')||'null'),t=localStorage.getItem('cm_token');
+if(!u||!t||u.role!=='student'){location.replace('login.html');return}
+var api=location.protocol==='file:'?'http://127.0.0.1:8000':location.hostname.endsWith('github.io')?'https://classmitra.onrender.com':'';
+fetch(api+'/api/auth/me',{headers:{Authorization:'Bearer '+t}}).then(function(r){if(r.status===401){localStorage.removeItem('cm_token');localStorage.removeItem('cm_user');location.replace('login.html')}}).catch(function(){})}catch(e){location.replace('login.html')}})();
+</script>
 </head>
 <body>
 <header class="top">

@@ -18,6 +18,10 @@ class Settings(BaseSettings):
         "http://localhost:5500,http://127.0.0.1:5500,https://ankita2005899.github.io"
     )
     gemini_api_key: str = ""  # free key from Google AI Studio (used from Phase 2)
+    # Database. MySQL: mysql+pymysql://root:PASSWORD@localhost:3306/classmitra
+    # If empty, a local SQLite file is used so the app still starts.
+    database_url: str = "sqlite:///./classmitra.db"
+    jwt_secret: str = ""  # long random text that signs login tokens
 
     @property
     def origins(self) -> list[str]:
