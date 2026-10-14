@@ -5,6 +5,7 @@ import os
 import re
 import secrets
 import time
+from datetime import datetime, timezone
 from typing import Literal
 
 import jwt
@@ -14,7 +15,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from .config import get_settings
-from .db import Admin, Student, get_db
+from .db import Admin, LoginActivity, Student, get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -93,6 +94,21 @@ def _reply(role: str, user) -> dict:
     }
 
 
+def _record_login(db: Session, role: str, user, typed: str) -> None:
+    """Add 1 to the person's login count and save the time and what they typed."""
+    now = datetime.now(timezone.utc)
+    row = db.scalar(select(LoginActivity).where(LoginActivity.role == role, LoginActivity.user_id == user.id))
+    if row:
+        row.login_count += 1
+        row.last_login_at = now
+        row.identifier = typed
+        row.name, row.email = user.name, user.email
+    else:
+        db.add(LoginActivity(role=role, user_id=user.id, name=user.name, email=user.email,
+                             identifier=typed, login_count=1, first_login_at=now, last_login_at=now))
+    db.commit()
+
+
 @router.post("/signup/student", status_code=201)
 def signup_student(b: StudentSignup, db: Session = Depends(get_db)):
     if db.scalar(select(Student).where(Student.email == b.email)):
@@ -131,6 +147,7 @@ def login(b: LoginIn, db: Session = Depends(get_db)):
     ).all()
     for user in rows:
         if verify_password(b.password, user.password_hash):
+            _record_login(db, b.role, user, ident)
             return _reply(b.role, user)
     if not rows:
         verify_password(b.password, _DUMMY)

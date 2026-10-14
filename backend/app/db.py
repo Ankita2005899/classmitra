@@ -56,6 +56,26 @@ class Admin(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class LoginActivity(Base):
+    """One row per person: how many times they logged in, and when last.
+
+    Only successful logins are counted. The password is never stored here.
+    """
+
+    __tablename__ = "logins"
+    __table_args__ = (UniqueConstraint("role", "user_id", name="uq_login_person"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    role: Mapped[str] = mapped_column(String(10))  # "student" or "admin"
+    user_id: Mapped[int] = mapped_column(Integer)  # id in the students or admins table
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(255))
+    identifier: Mapped[str] = mapped_column(String(255))  # what was typed in the login field last time
+    login_count: Mapped[int] = mapped_column(Integer, default=0)
+    first_login_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    last_login_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 def get_db():
     db = SessionLocal()
     try:
