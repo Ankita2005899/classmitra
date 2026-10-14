@@ -4,7 +4,7 @@ MySQL (Workbench) for real work, or a local SQLite file if DATABASE_URL is empty
 """
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, String, UniqueConstraint, create_engine
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from .config import get_settings
@@ -56,18 +56,31 @@ class Admin(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
-class LoginActivity(Base):
-    """One row per person: how many times they logged in, and when last.
+class StudentLogin(Base):
+    """One row per student: how many times the student logged in, and when last.
 
     Only successful logins are counted. The password is never stored here.
     """
 
-    __tablename__ = "logins"
-    __table_args__ = (UniqueConstraint("role", "user_id", name="uq_login_person"),)
+    __tablename__ = "student_logins"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    role: Mapped[str] = mapped_column(String(10))  # "student" or "admin"
-    user_id: Mapped[int] = mapped_column(Integer)  # id in the students or admins table
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), unique=True)
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(255))
+    identifier: Mapped[str] = mapped_column(String(255))  # what was typed in the login field last time
+    login_count: Mapped[int] = mapped_column(Integer, default=0)
+    first_login_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    last_login_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AdminLogin(Base):
+    """One row per admin: how many times the admin logged in, and when last."""
+
+    __tablename__ = "admin_logins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    admin_id: Mapped[int] = mapped_column(ForeignKey("admins.id"), unique=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255))
     identifier: Mapped[str] = mapped_column(String(255))  # what was typed in the login field last time

@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.db import LoginActivity, SessionLocal
+from app.db import AdminLogin, SessionLocal, StudentLogin
 from app.main import app
 
 client = TestClient(app)
@@ -47,25 +47,27 @@ def test_me_needs_a_valid_token():
     assert client.get("/api/auth/me").status_code == 401
 
 
-def _row(email):
+def _row(model, email):
     with SessionLocal() as db:
-        return db.scalar(select(LoginActivity).where(LoginActivity.email == email))
+        return db.scalar(select(model).where(model.email == email))
 
 
-def test_login_is_counted_and_last_login_is_saved():
+def test_student_login_is_counted_and_last_login_is_saved():
     s = {**STUDENT, "name": "Aman Patil", "roll_number": "22", "email": "aman@college.edu"}
     assert client.post("/api/auth/signup/student", json=s).status_code == 201
-    assert _row("aman@college.edu") is None  # signing up is not a login
+    assert _row(StudentLogin, "aman@college.edu") is None  # signing up is not a login
     assert login("student", "aman@college.edu", "secret123").status_code == 200
     assert login("student", "22", "wrong-password").status_code == 401  # a failed try is not counted
     assert login("student", "22", "secret123").status_code == 200
-    r = _row("aman@college.edu")
-    assert r.role == "student" and r.login_count == 2
+    r = _row(StudentLogin, "aman@college.edu")
+    assert r.login_count == 2
     assert r.identifier == "22"  # what was typed in the login field the last time
     assert r.last_login_at >= r.first_login_at
+    assert _row(AdminLogin, "aman@college.edu") is None  # a student never appears in the admin table
 
 
-def test_admin_logins_are_saved_as_admin():
+def test_admin_login_is_saved_in_the_admin_table():
     assert login("admin", "E101", "adminpass1").status_code == 200
-    r = _row("mehta@college.edu")
-    assert r.role == "admin" and r.login_count >= 1
+    r = _row(AdminLogin, "mehta@college.edu")
+    assert r.login_count >= 1 and r.identifier == "E101"
+    assert _row(StudentLogin, "mehta@college.edu") is None
