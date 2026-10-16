@@ -161,6 +161,54 @@ def login(b: LoginIn, db: Session = Depends(get_db)):
     raise HTTPException(401, "Wrong details. Check your email, ID or password, and the Student or Admin choice.")
 
 
+FIREBASE_JWKS = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+_jwks_client = jwt.PyJWKClient(FIREBASE_JWKS, cache_keys=True)
+
+
+def _signing_key(token: str):
+    """Google's public key that signed this Firebase token (tests replace this function)."""
+    return _jwks_client.get_signing_key_from_jwt(token).key
+
+
+def verify_firebase_token(token: str) -> dict:
+    """Check that a Firebase login token is real, for our project, and not expired."""
+    project = get_settings().firebase_project_id
+    if not project:
+        raise HTTPException(503, "Google and GitHub login is not set up on the server (FIREBASE_PROJECT_ID is empty).")
+    try:
+        return jwt.decode(
+            token, _signing_key(token), algorithms=["RS256"], audience=project,
+            issuer=f"https://securetoken.google.com/{project}", leeway=30,
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(401, "Google or GitHub login could not be checked. Please try again.")
+
+
+class SocialIn(BaseModel):
+    role: Literal["student", "admin"]
+    id_token: str = Field(min_length=20)
+
+
+@router.post("/social")
+def social_login(b: SocialIn, db: Session = Depends(get_db)):
+    """Log in with Google or GitHub (checked by Firebase). The email must already be registered
+    in the table of the chosen role, so a student cannot enter as admin this way either."""
+    claims = verify_firebase_token(b.id_token)
+    email = (claims.get("email") or "").strip().lower()
+    if not email or not claims.get("email_verified"):
+        raise HTTPException(400, "This account has no verified email. Please log in with your email and password.")
+    provider = (claims.get("firebase") or {}).get("sign_in_provider", "social").split(".")[0]  # google / github
+    model = Student if b.role == "student" else Admin
+    user = db.scalar(select(model).where(model.email == email))
+    if not user:
+        raise HTTPException(404, {
+            "message": f"No {b.role} account found for {email}. Fill in the details below to create one.",
+            "name": claims.get("name") or "", "email": email,
+        })
+    _record_login(db, b.role, user, f"{provider}:{email}")
+    return _reply(b.role, user)
+
+
 @router.get("/me")
 def me(authorization: str = Header(default=""), db: Session = Depends(get_db)):
     """Who is logged in? Used by the dashboards to check the token."""

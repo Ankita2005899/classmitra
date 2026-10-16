@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     # If empty, a local SQLite file is used so the app still starts.
     database_url: str = "sqlite:///./classmitra.db"
     jwt_secret: str = ""  # long random text that signs login tokens
+    # Firebase project id (public, not a secret). Needed for Google and GitHub login.
+    firebase_project_id: str = ""
 
     @property
     def origins(self) -> list[str]:

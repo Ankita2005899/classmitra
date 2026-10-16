@@ -1,6 +1,13 @@
+import time
+from types import SimpleNamespace
+
+import jwt
+import pytest
+from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from app import auth as auth_module
 from app.db import AdminLogin, SessionLocal, StudentLogin
 from app.main import app
 
@@ -71,3 +78,47 @@ def test_admin_login_is_saved_in_the_admin_table():
     r = _row(AdminLogin, "mehta@college.edu")
     assert r.login_count >= 1 and r.identifier == "E101"
     assert _row(StudentLogin, "mehta@college.edu") is None
+
+
+# ---- Google / GitHub login through Firebase (the Firebase token is made here, in the test) ----
+_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+
+@pytest.fixture()
+def firebase(monkeypatch):
+    monkeypatch.setattr(auth_module, "get_settings", lambda: SimpleNamespace(firebase_project_id="demo-proj", jwt_secret=""))
+    monkeypatch.setattr(auth_module, "_signing_key", lambda token: _KEY.public_key())
+
+
+def fb_token(email, provider="google.com", verified=True, aud="demo-proj"):
+    now = int(time.time())
+    claims = {"aud": aud, "iss": "https://securetoken.google.com/" + aud, "iat": now, "exp": now + 3600,
+              "email": email, "email_verified": verified, "name": "Neha Rao",
+              "firebase": {"sign_in_provider": provider}}
+    return jwt.encode(claims, _KEY, algorithm="RS256")
+
+
+def social(role, token):
+    return client.post("/api/auth/social", json={"role": role, "id_token": token})
+
+
+def test_google_login_works_and_is_counted(firebase):
+    s = {**STUDENT, "name": "Neha Rao", "roll_number": "23", "email": "neha@college.edu"}
+    assert client.post("/api/auth/signup/student", json=s).status_code == 201
+    r = social("student", fb_token("neha@college.edu"))
+    assert r.status_code == 200 and r.json()["redirect"] == "student.html"
+    assert social("student", fb_token("neha@college.edu", "github.com")).status_code == 200
+    row = _row(StudentLogin, "neha@college.edu")
+    assert row.login_count == 2 and row.identifier == "github:neha@college.edu"
+
+
+def test_social_login_needs_an_account_in_that_role(firebase):
+    r = social("student", fb_token("nobody@college.edu"))
+    assert r.status_code == 404 and r.json()["detail"]["email"] == "nobody@college.edu"
+    assert social("admin", fb_token("neha@college.edu")).status_code == 404  # a student is not an admin
+
+
+def test_bad_firebase_tokens_are_refused(firebase):
+    assert social("student", fb_token("neha@college.edu", verified=False)).status_code == 400
+    assert social("student", fb_token("neha@college.edu", aud="other-project")).status_code == 401
+    assert social("student", "x" * 40).status_code == 401
