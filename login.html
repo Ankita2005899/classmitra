@@ -72,10 +72,30 @@ input:focus,select:focus{outline:none;border-color:var(--board);box-shadow:0 0 0
 </section>
 <main class="right"><div class="card" id="card"></div></main>
 <div class="toast" id="toast" role="status"></div>
+<script src="js/firebase-config.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 localStorage.removeItem('cm_token');
 const API=location.protocol==='file:'?'http://127.0.0.1:8000':location.hostname.endsWith('github.io')?'https://classmitra.onrender.com':'';
+
+function saveLogin(j){localStorage.setItem('cm_token',j.token);localStorage.setItem('cm_user',JSON.stringify({role:j.role,name:j.name}))}
+async function socialLogin(kind){
+ const cfg=window.FIREBASE_CONFIG;
+ if(!cfg||!cfg.apiKey){toast('Firebase is not set up yet. Add your settings in js/firebase-config.js.');return}
+ try{
+  const B='https://www.gstatic.com/firebasejs/10.14.1/';
+  const [{initializeApp,getApps},A]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js')]);
+  const auth=A.getAuth(getApps().length?getApps()[0]:initializeApp(cfg));
+  const prov=kind==='google'?new A.GoogleAuthProvider():new A.GithubAuthProvider();
+  if(kind==='github')prov.addScope('user:email');
+  const res=await A.signInWithPopup(auth,prov),idToken=await res.user.getIdToken();
+  await A.signOut(auth);
+  const r=await fetch(API+'/api/auth/social',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role,id_token:idToken})}),j=await r.json().catch(()=>({}));
+  if(r.status===404&&j.detail&&j.detail.email){mode='signup';render();const n=$('#nm'),m=$('#em');if(n)n.value=j.detail.name||'';if(m)m.value=j.detail.email;$('#err').textContent=j.detail.message;return}
+  if(!r.ok){toast(typeof j.detail==='string'?j.detail:'Social login failed. Try again.');return}
+  saveLogin(j);location.href=j.role==='student'?'student.html':'admin.html';
+ }catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;toast('Social login failed: '+(e.code||e.message))}
+}
 async function send(){
  const v=i=>($('#'+i)||{value:''}).value.trim(),g=$('#go'),txt=g.textContent,pw=$('#pw').value;
  const url=mode==='login'?'/api/auth/login':role==='student'?'/api/auth/signup/student':'/api/auth/signup/admin';
@@ -100,8 +120,8 @@ let role='student',mode='login',done=null,who='',step=0;
 const inp=(id,l,t='text',p='',full=false)=>`<label class="fl ${full?'full':''}">${l}<input id="${id}" type="${t}" placeholder="${p}" data-req></label>`;
 const sel=(id,l,o)=>`<label class="fl"><span>${l}</span><select id="${id}">${o.map(x=>`<option>${x}</option>`).join('')}</select></label>`;
 const social=`<div class="sw">
-<button class="sbtn" data-s="Google">${ICON.g}Continue with Google</button>
-<button class="sbtn" data-s="GitHub">${ICON.gh}Continue with GitHub</button>
+<button class="sbtn" data-social="google">${ICON.g}Continue with Google</button>
+<button class="sbtn" data-social="github">${ICON.gh}Continue with GitHub</button>
 <button class="sbtn edu" data-s="your college account (Microsoft 365)">${ICON.ms}<span>Continue with college account<small>Microsoft 365 school or college email</small></span></button>
 <button class="sbtn edu" data-s="DigiLocker">${ICON.dl}<span>Continue with DigiLocker<small>Verified student and teacher identity</small></span></button></div>`;
 function fields(){
@@ -145,6 +165,7 @@ document.addEventListener('click',e=>{
  const tt=e.target.closest('[data-t]');if(tt){step+=tt.dataset.t==='next'?1:-1;render();return}
  const r=e.target.closest('[data-role]');if(r){role=r.dataset.role;render();return}
  const m=e.target.closest('[data-mode]');if(m){mode=m.dataset.mode;render();return}
+ const so=e.target.closest('[data-social]');if(so){socialLogin(so.dataset.social);return}
  const s=e.target.closest('[data-s]');if(s){toast('Demo only: sign in with '+s.dataset.s+' will work once the backend is connected.');return}
  if(e.target.id==='go'){
   const req=[...document.querySelectorAll('[data-req]')];let bad=0;
