@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     jwt_secret: str = ""  # long random text that signs login tokens
     # Firebase project id (public, not a secret). Needed for Google and GitHub login.
     firebase_project_id: str = ""
+    gemini_model: str = "gemini-2.5-flash"  # model that writes the lesson explanation
+    max_upload_mb: int = 25  # biggest file an admin can upload
 
     @property
     def origins(self) -> list[str]:

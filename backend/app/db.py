@@ -4,7 +4,7 @@ MySQL (Workbench) for real work, or a local SQLite file if DATABASE_URL is empty
 """
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, create_engine
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from .config import get_settings
@@ -87,6 +87,25 @@ class AdminLogin(Base):
     login_count: Mapped[int] = mapped_column(Integer, default=0)
     first_login_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
     last_login_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class LessonFile(Base):
+    """A file an admin uploaded for one division. The file itself is on disk, this row describes it."""
+
+    __tablename__ = "lesson_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    admin_id: Mapped[int] = mapped_column(ForeignKey("admins.id"))
+    department: Mapped[str] = mapped_column(String(10))
+    year: Mapped[str] = mapped_column(String(10))
+    division: Mapped[str] = mapped_column(String(10))
+    original_name: Mapped[str] = mapped_column(String(255))
+    stored_name: Mapped[str] = mapped_column(String(60))  # random name on disk, never the user's name
+    content_type: Mapped[str] = mapped_column(String(100), default="")
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20), default="uploaded")  # uploaded or explained
+    explanation: Mapped[str | None] = mapped_column(Text, nullable=True)  # the AI lesson, saved as JSON text
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
 def get_db():

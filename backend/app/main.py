@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from .auth import router as auth_router
 from .config import get_settings
 from .db import Base, engine
+from .files import router as files_router
 from .data import DEPARTMENTS
 
 settings = get_settings()
@@ -30,12 +31,13 @@ app = FastAPI(title="ClassMitra API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
 
 app.include_router(auth_router)
+app.include_router(files_router)
 
 
 @app.get("/api/health")
