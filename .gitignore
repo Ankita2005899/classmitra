@@ -16,3 +16,5 @@ node_modules/
 *.mp4
 output/
 *.db
+
+backend/uploads/
