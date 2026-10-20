@@ -10,7 +10,16 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from .config import get_settings
 
 _url = get_settings().database_url
-_args = {"check_same_thread": False} if _url.startswith("sqlite") else {}
+if _url.startswith("sqlite"):
+    _args = {"check_same_thread": False}
+elif any(h in _url for h in ("@localhost", "@127.0.0.1")):
+    _args = {}
+else:  # cloud MySQL (Aiven, TiDB...) needs SSL
+    import ssl
+    _ctx = ssl.create_default_context()
+    _ctx.check_hostname = False
+    _ctx.verify_mode = ssl.CERT_NONE
+    _args = {"ssl": _ctx}
 engine = create_engine(_url, connect_args=_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
 
@@ -24,7 +33,7 @@ def _now() -> datetime:
 
 
 class Student(Base):
-    __tablename__ = "students"
+    __tablename__ = "create_account_student"
     __table_args__ = (
         UniqueConstraint("college", "department", "division", "roll_number", name="uq_student_roll"),
     )
@@ -41,7 +50,7 @@ class Student(Base):
 
 
 class Admin(Base):
-    __tablename__ = "admins"
+    __tablename__ = "create_account_admin"
     __table_args__ = (UniqueConstraint("college", "employee_id", name="uq_admin_employee"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -62,10 +71,10 @@ class StudentLogin(Base):
     Only successful logins are counted. The password is never stored here.
     """
 
-    __tablename__ = "student_logins"
+    __tablename__ = "login_student"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), unique=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("create_account_student.id"), unique=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255))
     identifier: Mapped[str] = mapped_column(String(255))  # what was typed in the login field last time
@@ -77,10 +86,10 @@ class StudentLogin(Base):
 class AdminLogin(Base):
     """One row per admin: how many times the admin logged in, and when last."""
 
-    __tablename__ = "admin_logins"
+    __tablename__ = "login_admin"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    admin_id: Mapped[int] = mapped_column(ForeignKey("admins.id"), unique=True)
+    admin_id: Mapped[int] = mapped_column(ForeignKey("create_account_admin.id"), unique=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255))
     identifier: Mapped[str] = mapped_column(String(255))  # what was typed in the login field last time
@@ -95,7 +104,7 @@ class LessonFile(Base):
     __tablename__ = "lesson_files"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    admin_id: Mapped[int] = mapped_column(ForeignKey("admins.id"))
+    admin_id: Mapped[int] = mapped_column(ForeignKey("create_account_admin.id"))
     department: Mapped[str] = mapped_column(String(10))
     year: Mapped[str] = mapped_column(String(10))
     division: Mapped[str] = mapped_column(String(10))
