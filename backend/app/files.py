@@ -211,8 +211,13 @@ def call_gemini(prompt: str) -> str:
     except httpx.HTTPError:
         raise HTTPException(502, "Could not reach the AI service. Check the internet and try again.")
     if r.status_code != 200:
+        try:  # Google explains the problem in the answer. The key is never part of it.
+            err = r.json().get("error", {})
+            why = f"{err.get('status', '')}: {str(err.get('message', ''))[:180]}".strip(": ")
+        except ValueError:
+            why = ""
         raise HTTPException(502, f"The AI service refused the request (code {r.status_code}). "
-                                 "Check the API key, the model name, or the free limit.")
+                                 f"{why} Check the API key, the model name (GEMINI_MODEL), or the free limit.")
     try:
         return r.json()["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, ValueError):

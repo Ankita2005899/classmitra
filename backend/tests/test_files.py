@@ -97,3 +97,20 @@ def test_explain_problems_give_clear_errors(admin, monkeypatch):
     assert client.post(f"/api/files/{ok}/explain", headers=admin).status_code == 502
     bad = up(admin, "broken.pptx", b"not a zip").json()["id"]
     assert client.post(f"/api/files/{bad}/explain", headers=admin).status_code == 422
+
+
+def test_google_error_reason_is_shown_without_the_key(admin, monkeypatch):
+    fid = up(admin, "a.txt", b"Some lesson text").json()["id"]
+    monkeypatch.setattr(files_module, "get_settings",
+                        lambda: SimpleNamespace(max_upload_mb=25, gemini_api_key="AQ.secret-key-123", gemini_model="m"))
+
+    class Reply:
+        status_code = 401
+
+        def json(self):
+            return {"error": {"status": "UNAUTHENTICATED", "message": "Expected OAuth 2 access token"}}
+
+    monkeypatch.setattr(files_module.httpx, "post", lambda *a, **k: Reply())
+    r = client.post(f"/api/files/{fid}/explain", headers=admin)
+    assert r.status_code == 502 and "UNAUTHENTICATED" in r.json()["detail"] and "401" in r.json()["detail"]
+    assert "AQ.secret-key-123" not in r.text
