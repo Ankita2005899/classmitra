@@ -1,5 +1,9 @@
+import array
 import io
 import json
+import math
+import time
+import wave
 import zipfile
 from types import SimpleNamespace
 
@@ -7,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import files as files_module
+from app import video as video_module
 from app.main import app
 
 client = TestClient(app)
@@ -114,3 +119,52 @@ def test_google_error_reason_is_shown_without_the_key(admin, monkeypatch):
     r = client.post(f"/api/files/{fid}/explain", headers=admin)
     assert r.status_code == 502 and "UNAUTHENTICATED" in r.json()["detail"] and "401" in r.json()["detail"]
     assert "AQ.secret-key-123" not in r.text
+
+
+def fake_voice(text, out):
+    """A made-up voice (a loud and quiet tone) so the test needs no internet."""
+    with wave.open(str(out), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        a = array.array("h", [int(12000 * math.sin(i / 9) * (1 if (i // 1600) % 3 else 0.03)) for i in range(16000 * 2)])
+        w.writeframes(a.tobytes())
+
+
+def test_video_is_made_from_the_saved_lesson(admin, monkeypatch):
+    fid = up(admin, "v.txt", b"Stacks and queues").json()["id"]
+    assert client.post(f"/api/files/{fid}/video", headers=admin).status_code == 409  # not explained yet
+    monkeypatch.setattr(files_module, "call_gemini", lambda p: json.dumps(LESSON))
+    client.post(f"/api/files/{fid}/explain", headers=admin)
+    monkeypatch.setattr(video_module, "speak_to_file", fake_voice)
+    assert client.get(f"/api/files/{fid}/video/status", headers=admin).json()["status"] == "none"
+    assert client.post(f"/api/files/{fid}/video", headers=admin).status_code == 202
+    for _ in range(60):
+        status = client.get(f"/api/files/{fid}/video/status", headers=admin).json()
+        if status["status"] != "working":
+            break
+        time.sleep(0.5)
+    assert status["status"] == "ready", status
+    mp4 = client.get(f"/api/files/{fid}/video", headers=admin)
+    assert mp4.status_code == 200 and mp4.content[4:8] == b"ftyp" and len(mp4.content) > 1000
+    assert client.get(f"/api/files/{fid}/video", headers=signup("student")).status_code == 401
+    assert client.delete(f"/api/files/{fid}", headers=admin).status_code == 200
+    assert not list(files_module.UPLOAD_DIR.glob("*.mp4"))  # the video is deleted with the file
+
+
+def test_failed_video_shows_the_reason(admin, monkeypatch):
+    fid = up(admin, "w.txt", b"Some text").json()["id"]
+    monkeypatch.setattr(files_module, "call_gemini", lambda p: json.dumps(LESSON))
+    client.post(f"/api/files/{fid}/explain", headers=admin)
+
+    def broken(text, out):
+        raise RuntimeError("no internet")
+
+    monkeypatch.setattr(video_module, "speak_to_file", broken)
+    client.post(f"/api/files/{fid}/video", headers=admin)
+    for _ in range(40):
+        status = client.get(f"/api/files/{fid}/video/status", headers=admin).json()
+        if status["status"] != "working":
+            break
+        time.sleep(0.25)
+    assert status["status"] == "failed" and "no internet" in status["detail"]

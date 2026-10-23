@@ -6,6 +6,8 @@ and are never shown inside a web page: they can only be downloaded.
 import io
 import json
 import re
+import threading
+import time
 import uuid
 import zipfile
 from pathlib import Path
@@ -19,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import auth
+from . import video as video_module
 from .config import get_settings
 from .db import Admin, LessonFile, get_db
 
@@ -114,7 +117,8 @@ def delete(file_id: int, admin: Admin = Depends(current_admin), db: Session = De
     row = _get_file(db, file_id, admin)
     if row.admin_id != admin.id:
         raise HTTPException(403, "Only the admin who uploaded this file can delete it.")
-    (UPLOAD_DIR / row.stored_name).unlink(missing_ok=True)
+    for end in ("", ".mp4", ".working", ".failed"):
+        (UPLOAD_DIR / (row.stored_name + end)).unlink(missing_ok=True)
     db.delete(row)
     db.commit()
     return {"deleted": file_id}
@@ -265,3 +269,60 @@ def get_explanation(file_id: int, admin: Admin = Depends(current_admin), db: Ses
     if not row.explanation:
         raise HTTPException(404, "This file has not been explained yet.")
     return json.loads(row.explanation)
+
+
+# ---------------- the lesson video (MP4) ----------------
+def _video_files(row: LessonFile):
+    base = UPLOAD_DIR / row.stored_name
+    return base.with_name(base.name + ".mp4"), base.with_name(base.name + ".working"), base.with_name(base.name + ".failed")
+
+
+def _is_working(marker: Path) -> bool:
+    return marker.exists() and time.time() - marker.stat().st_mtime < 20 * 60  # an old marker means a job that died
+
+
+def _build_video(lesson: dict, mp4: Path, working: Path, failed: Path) -> None:
+    try:
+        video_module.make_video(lesson, mp4)
+    except Exception as err:  # the reason is shown to the admin, so they can fix it
+        mp4.unlink(missing_ok=True)
+        failed.write_text(f"{type(err).__name__}: {err}"[:400], encoding="utf-8")
+    finally:
+        working.unlink(missing_ok=True)
+
+
+@router.post("/{file_id}/video", status_code=202)
+def make_video(file_id: int, force: bool = False, admin: Admin = Depends(current_admin), db: Session = Depends(get_db)):
+    row = _get_file(db, file_id, admin)
+    if not row.explanation:
+        raise HTTPException(409, "Click Explain with AI teacher first. The video is made from that lesson.")
+    mp4, working, failed = _video_files(row)
+    if _is_working(working):
+        return {"status": "working"}
+    if mp4.exists() and not force:
+        return {"status": "ready"}
+    failed.unlink(missing_ok=True)
+    working.write_text("1")
+    threading.Thread(target=_build_video, args=(json.loads(row.explanation), mp4, working, failed), daemon=True).start()
+    return {"status": "working"}
+
+
+@router.get("/{file_id}/video/status")
+def video_status(file_id: int, admin: Admin = Depends(current_admin), db: Session = Depends(get_db)):
+    mp4, working, failed = _video_files(_get_file(db, file_id, admin))
+    if _is_working(working):
+        return {"status": "working"}
+    if mp4.exists():
+        return {"status": "ready"}
+    if failed.exists():
+        return {"status": "failed", "detail": failed.read_text(encoding="utf-8")}
+    return {"status": "none"}
+
+
+@router.get("/{file_id}/video")
+def get_video(file_id: int, admin: Admin = Depends(current_admin), db: Session = Depends(get_db)):
+    row = _get_file(db, file_id, admin)
+    mp4 = _video_files(row)[0]
+    if not mp4.is_file():
+        raise HTTPException(404, "The video is not ready yet.")
+    return FileResponse(mp4, media_type="video/mp4", filename=Path(row.original_name).stem + "-lesson.mp4")

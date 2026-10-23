@@ -110,7 +110,8 @@ fetch(api+'/api/auth/me',{headers:{Authorization:'Bearer '+t}}).then(function(r)
 <div class="cnt" id="tcnt"></div>
 <div class="ctl"><button class="btn g" id="tprev">Previous</button><button class="btn" id="tplay">Play</button><button class="btn g" id="tnext">Next</button>
 <label class="cnt" style="margin:0">Speed <select id="trate" aria-label="Speaking speed"><option value="0.85">Slow</option><option value="1" selected>Normal</option><option value="1.2">Fast</option></select></label></div>
-<p class="cnt">This is a live teacher in the browser, using your computer's voice. A real MP4 video with a realistic avatar comes in a later phase.</p></div></div></div>
+<p class="cnt">This is a live teacher in the browser. To get a real MP4 video file, close this window and click Make video in the file list.</p></div></div></div>
+<div class="tv" id="vv" hidden><div class="tbox" style="grid-template-columns:1fr" role="dialog" aria-modal="true" aria-label="Lesson video"><button class="x" id="vclose" aria-label="Close">&times;</button><video id="vid" controls style="width:100%;border-radius:12px;background:#000"></video></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
 const $=s=>document.querySelector(s),J=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}},P2=n=>String(n).padStart(2,'0');
@@ -164,11 +165,23 @@ const fsize=n=>n<1048576?Math.max(1,Math.round(n/1024))+' KB':(n/1048576).toFixe
 const fq=()=>{const p=path();return 'department='+p[0]+'&year='+p[1]+'&division='+p[2]};
 const fmsg=t=>{const e=$('#fmsg');if(e)e.textContent=t};
 const detail=async r=>{const j=await r.json().catch(()=>({}));return typeof j.detail==='string'?j.detail:'Something went wrong. Try again.'};
-function filesCard(){return`<section class="card"><h2>Lesson files and AI teacher</h2><p class="sub">Upload any file. The AI teacher can explain PDF, PPTX, DOCX and text files. Files you explain are sent to the Gemini AI service.</p><label class="drop" id="fdrop"><input class="sr" id="ffile" type="file"><b>Drop a file here</b><span>or click to choose any file, up to 25 MB</span></label><p class="sub" id="fmsg" role="status" style="margin:0"></p><div id="flist"></div></section>`}
+function filesCard(){return`<section class="card"><h2>Lesson files and AI teacher</h2><p class="sub">Upload any file. The AI teacher can explain PDF, PPTX, DOCX and text files, and make an MP4 lesson video. Files you explain are sent to the Gemini AI service.</p><label class="drop" id="fdrop"><input class="sr" id="ffile" type="file"><b>Drop a file here</b><span>or click to choose any file, up to 25 MB</span></label><p class="sub" id="fmsg" role="status" style="margin:0"></p><div id="flist"></div></section>`}
 async function loadFiles(){const box=$('#flist');if(!box)return;
  try{const r=await fetch(API+'/api/files?'+fq(),{headers:AH()});if(!r.ok){box.innerHTML='<div class="empty">'+esc(await detail(r))+'</div>';return}
- const L=await r.json();box.innerHTML=L.length?L.map(f=>`<div class="fr"><div><b>${esc(f.name)}</b><small>${fsize(f.size)} · ${new Date(f.uploaded).toLocaleDateString('en-IN')}${f.status==='explained'?' · explained':''}</small></div><div class="fa">${f.status==='explained'?`<button class="btn go sm" data-wt="${f.id}">Watch teacher</button>`:''}<button class="btn ${f.status==='explained'?'g':'go'} sm" data-ex="${f.id}">${f.status==='explained'?'Explain again':'Explain with AI teacher'}</button><button class="btn g sm" data-dl="${f.id}" data-n="${esc(f.name)}">Download</button><button class="btn g sm" data-fd="${f.id}">Delete</button></div></div>`).join(''):'<div class="empty">No files uploaded for this division yet.</div>'}
+ const L=await r.json();
+ const V=await Promise.all(L.map(async f=>{if(f.status!=='explained')return'';try{return(await(await fetch(API+'/api/files/'+f.id+'/video/status',{headers:AH()})).json()).status}catch(e){return''}}));
+ box.innerHTML=L.length?L.map((f,i)=>{const v=V[i],ex=f.status==='explained';return`<div class="fr"><div><b>${esc(f.name)}</b><small>${fsize(f.size)} · ${new Date(f.uploaded).toLocaleDateString('en-IN')}${ex?' · explained':''}${v==='ready'?' · video ready':''}</small></div><div class="fa">${ex?`<button class="btn go sm" data-wt="${f.id}">Watch teacher</button>`:''}${v==='ready'?`<button class="btn go sm" data-pv="${f.id}">Play video</button><button class="btn g sm" data-dv="${f.id}" data-n="${esc(f.name)}">Download video</button>`:v==='working'?'<button class="btn g sm" disabled>Making video...</button>':ex?`<button class="btn go sm" data-mv="${f.id}">Make video</button>`:''}<button class="btn ${ex?'g':'go'} sm" data-ex="${f.id}">${ex?'Explain again':'Explain with AI teacher'}</button><button class="btn g sm" data-dl="${f.id}" data-n="${esc(f.name)}">Download file</button><button class="btn g sm" data-fd="${f.id}">Delete</button></div></div>`}).join(''):'<div class="empty">No files uploaded for this division yet.</div>';
+ const w=V.findIndex(v=>v==='working');if(w>=0)pollVideo(L[w].id)}
  catch(e){box.innerHTML='<div class="empty">Cannot reach the server. Open this page from http://localhost:8000</div>'}}
+let pollT=null;
+async function makeVideo(id){fmsg('Making the video. This takes a few minutes, so please wait...');
+ try{const r=await fetch(API+'/api/files/'+id+'/video',{method:'POST',headers:AH()});if(!r.ok){fmsg(await detail(r));return}loadFiles()}catch(e){fmsg('Cannot reach the server.')}}
+function pollVideo(id){clearInterval(pollT);pollT=setInterval(async()=>{try{const j=await(await fetch(API+'/api/files/'+id+'/video/status',{headers:AH()})).json();
+ if(j.status==='ready'){clearInterval(pollT);fmsg('The video is ready.');loadFiles()}else if(j.status==='failed'){clearInterval(pollT);fmsg('The video could not be made: '+j.detail);loadFiles()}}catch(e){}},3000)}
+async function videoBlob(id){const r=await fetch(API+'/api/files/'+id+'/video',{headers:AH()});if(!r.ok){toast(await detail(r));return null}return URL.createObjectURL(await r.blob())}
+async function playVideo(id){const u=await videoBlob(id);if(!u)return;const v=$('#vid');v.src=u;$('#vv').hidden=false;const p=v.play();if(p&&p.catch)p.catch(()=>{})}
+async function saveVideo(id,name){const u=await videoBlob(id);if(!u)return;const a=document.createElement('a');a.href=u;a.download=name.replace(/\.[^.]*$/,'')+'-lesson.mp4';a.click()}
+function closeVideo(){const v=$('#vid');v.pause();v.removeAttribute('src');$('#vv').hidden=true}
 async function upFile(f){if(!f)return;fmsg('Uploading '+f.name+'...');const fd=new FormData(),p=path();fd.append('department',p[0]);fd.append('year',p[1]);fd.append('division',p[2]);fd.append('file',f);
  try{const r=await fetch(API+'/api/files/upload',{method:'POST',headers:AH(),body:fd});fmsg(r.ok?'Uploaded: '+f.name:await detail(r));loadFiles()}catch(e){fmsg('Cannot reach the server.')}}
 async function dlFile(id,name){try{const r=await fetch(API+'/api/files/'+id+'/download',{headers:AH()});if(!r.ok){toast(await detail(r));return}
@@ -194,7 +207,8 @@ function openTeacher(lesson){LS=lesson.sections;ti=0;playing=false;showSec();$('
 function closeTeacher(){playing=false;stopTalk();$('#tv').hidden=true}
 document.addEventListener('click',e=>{const g=s=>e.target.closest(s);let x;
 if(x=g('[data-dl]')){dlFile(+x.dataset.dl,x.dataset.n);return}if(x=g('[data-ex]')){explainFile(+x.dataset.ex);return}
-if(x=g('[data-wt]')){watchFile(+x.dataset.wt);return}if(x=g('[data-fd]')){delFile(+x.dataset.fd);return}
+if(x=g('[data-wt]')){watchFile(+x.dataset.wt);return}
+if(x=g('[data-mv]')){makeVideo(+x.dataset.mv);return}if(x=g('[data-pv]')){playVideo(+x.dataset.pv);return}if(x=g('[data-dv]')){saveVideo(+x.dataset.dv,x.dataset.n);return}if(g('#vclose')){closeVideo();return}if(x=g('[data-fd]')){delFile(+x.dataset.fd);return}
 if(g('#tclose')){closeTeacher();return}if(g('#tprev')){if(ti>0){ti--;showSec();if(playing)talk()}return}
 if(g('#tnext')){if(ti<LS.length-1){ti++;showSec();if(playing)talk()}return}
 if(g('#tplay')){playing=!playing;showSec();if(playing)talk();else stopTalk();return}
@@ -211,7 +225,7 @@ document.addEventListener('change',e=>{if(e.target.id==='ffile'){upFile(e.target
 document.addEventListener('input',e=>{if(e.target.id==='sq'){q=e.target.value;const p=e.target.selectionStart;$('#tb').innerHTML=body();const i=$('#sq');i.focus();i.setSelectionRange(p,p)}});
 document.addEventListener('dragover',e=>{if(e.target.closest('#fdrop')){e.preventDefault();$('#fdrop').classList.add('over')}});document.addEventListener('dragleave',e=>{if(e.target.closest('#fdrop'))$('#fdrop').classList.remove('over')});
 document.addEventListener('drop',e=>{if(e.target.closest('#fdrop')){e.preventDefault();$('#fdrop').classList.remove('over');upFile(e.dataTransfer.files[0])}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#tv').hidden)closeTeacher()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#tv').hidden)closeTeacher();if(!$('#vv').hidden)closeVideo()}});
 document.addEventListener('dragover',e=>{if(e.target.closest('#drop')){e.preventDefault();$('#drop').classList.add('over')}});document.addEventListener('dragleave',e=>{if(e.target.closest('#drop'))$('#drop').classList.remove('over')});
 document.addEventListener('drop',e=>{if(e.target.closest('#drop')){e.preventDefault();$('#drop').classList.remove('over');save(e.dataTransfer.files[0])}});
 window.addEventListener('storage',e=>{if(e.key==='cm_feedback'&&tab==='msg'&&$('#tb')){$('#tb').innerHTML=body();toast('New message from a student')}});
